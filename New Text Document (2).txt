@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxuryStay - Premium Hotel Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hero-pattern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .calendar-day {
+            transition: all 0.3s ease;
+        }
+        .calendar-day:hover {
+            background-color: #667eea;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            animation: modalFadeIn 0.3s;
+        }
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-50px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        .admin-panel {
+            display: none;
+            background-color: #f8fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-hotel text-blue-600 text-2xl mr-2"></i>
+                        <span class="font-bold text-xl text-gray-800">LuxuryStay</span>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="#home" class="text-gray-700 hover:text-blue-600 px-3 py-2 font-medium">Home</a>
+                        <a href="#rooms" class="text-gray-700 hover:text-blue-600 px-3 py-2 font-medium">Rooms</a>
+                        <a href="#booking" class="text-gray-700 hover:text-blue-600 px-3 py-2 font-medium">Book Now</a>
+                        <a href="#about" class="text-gray-700 hover:text-blue-600 px-3 py-2 font-medium">About</a>
+                        <a href="#contact" class="text-gray-700 hover:text-blue-600 px-3 py-2 font-medium">Contact</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="adminLoginBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+                        <i class="fas fa-user mr-2"></i>Admin Login
+                    </button>
+                    <button class="md:hidden">
+                        <i class="fas fa-bars text-gray-600 text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-pattern pt-24 pb-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                        Luxury Awaits at Every Stay
+                    </h1>
+                    <p class="text-xl text-blue-100 mb-8">
+                        Experience unparalleled comfort and exceptional service at LuxuryStay. Your perfect getaway begins here.
+                    </p>
+                    <div class="flex space-x-4">
+                        <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100">
+                            Book Now
+                        </button>
+                        <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600">
+                            Explore Rooms
+                        </button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c4b3fca8-432e-40fd-89aa-a2534a9c50f3.png" alt="Luxury hotel lobby with contemporary design, marble floors, elegant chandeliers, and comfortable seating areas" class="rounded-lg shadow-2xl" onerror="this.style.display='none'">
+                    <div class="absolute -inset-4 bg-blue-400 rounded-lg opacity-20 -z-10"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Panel (Hidden by default) -->
+    <div id="adminPanel" class="admin-panel">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+                <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-bed text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">156</h3>
+                            <p class="text-gray-600">Total Rooms</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-users text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">42</h3>
+                            <p class="text-gray-600">Current Guests</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-calendar-check text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">89%</h3>
+                            <p class="text-gray-600">Occupancy Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-xl font-semibold mb-4">Recent Bookings</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Guest</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-in</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4">John Smith</td>
+                                <td class="px-6 py-4">Deluxe King</td>
+                                <td class="px-6 py-4">2024-01-15</td>
+                                <td class="px-6 py-4"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Checked In</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">Sarah Johnson</td>
+                                <td class="px-6 py-4">Executive Suite</td>
+                                <td class="px-6 py-4">2024-01-16</td>
+                                <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Confirmed</span></td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">Mike Wilson</td>
+                                <td class="px-6 py-4">Presidential Suite</td>
+                                <td class="px-6 py-4">2024-01-14</td>
+                                <td class="px-6 py-4"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">Pending</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Why Choose LuxuryStay?</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Experience the difference with our premium amenities and services</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-wifi text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">High-Speed WiFi</h3>
+                    <p class="text-gray-600">Stay connected with our complimentary high-speed internet access throughout the property.</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-utensils text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Fine Dining</h3>
+                    <p class="text-gray-600">Savor exquisite cuisine at our award-winning restaurant with 24/7 room service.</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-spa text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Spa & Wellness</h3>
+                    <p class="text-gray-600">Relax and rejuvenate at our world-class spa and fitness center facilities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rooms Section -->
+    <section id="rooms" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our Rooms & Suites</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Discover our carefully curated selection of luxurious accommodations</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Room 1 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden room-card transition-all duration-300">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/6be647f9-9c90-44c2-a884-2bd7cd0c69dd.png" alt="Deluxe king room with plush bedding, modern furniture, and city skyline view through floor-to-ceiling windows" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Deluxe King Room</h3>
+                        <p class="text-gray-600 mb-4">Spacious room with king-sized bed, work desk, and panoramic city views.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-blue-600">$199/night</span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Available</span>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                            Book Now
+                        </button>
+                    </div>
+                </div>
+                <!-- Room 2 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden room-card transition-all duration-300">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/97357239-b600-4c49-9cbb-633adb2bfb0a.png" alt="Executive suite with separate living area, luxury bathroom with marble finishes, and private balcony overlooking ocean" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Executive Suite</h3>
+                        <p class="text-gray-600 mb-4">Premium suite with separate living area, mini-bar, and exclusive amenities.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-blue-600">$349/night</span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Available</span>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                            Book Now
+                        </button>
+                    </div>
+                </div>
+                <!-- Room 3 -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden room-card transition-all duration-300">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d20850c0-fad6-451d-ae43-7548e2b0227d.png" alt="Presidential penthouse suite with grand piano, dining area for eight, and wrap-around terrace with jacuzzi" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Presidential Suite</h3>
+                        <p class="text-gray-600 mb-4">Ultra-luxurious suite with private terrace, butler service, and premium amenities.</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-blue-600">$699/night</span>
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">Limited</span>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                            Book Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section id="booking" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="bg-blue-600 rounded-2xl p-8 md:p-12 text-white">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Book Your Stay</h2>
+                        <p class="text-blue-100 mb-6">Secure your perfect room with our easy booking system. Special offers available for extended stays.</p>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-phone text-2xl"></i>
+                            <span class="text-lg">+1 (555) 123-4567</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6">
+                        <form class="space-y-4">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Check-in Date</label>
+                                    <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Check-out Date</label>
+                                    <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Guests</label>
+                                    <select class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <option>1 Guest</option>
+                                        <option>2 Guests</option>
+                                        <option>3 Guests</option>
+                                        <option>4+ Guests</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Room Type</label>
+                                    <select class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <option>Deluxe King</option>
+                                        <option>Executive Suite</option>
+                                        <option>Presidential Suite</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold">
+                                Check Availability
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/dfde55e5-ac57-4788-8d9b-625fbf57fe01.png" alt="Hotel exterior with modern architecture, lush landscaping, and elegant entrance with valet service" class="rounded-lg shadow-xl" onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6">About LuxuryStay</h2>
+                    <p class="text-gray-600 mb-6">
+                        Established in 2010, LuxuryStay has been redefining hospitality excellence with our commitment to exceptional service, luxurious accommodations, and unforgettable experiences. Our dedicated team ensures every guest receives personalized attention and world-class service.
+                    </p>
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div class="text-3xl font-bold text-blue-600">500+</div>
+                            <div class="text-gray-600">Rooms & Suites</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-blue-600">98%</div>
+                            <div class="text-gray-600">Guest Satisfaction</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-blue-600">24/7</div>
+                            <div class="text-gray-600">Concierge Service</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-blue-600">5★</div>
+                            <div class="text-gray-600">Luxury Rating</div>
+                        </div>
+                    </div>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">
+                        Learn More About Us
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Contact Us</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">We're here to assist you with any inquiries or special requests</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                        <h3 class="text-xl font-semibold mb-4">Hotel Information</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-blue-600 mr-3"></i>
+                                <span>123 Luxury Avenue, Metropolitan City, MC 12345</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-blue-600 mr-3"></i>
+                                <span>+1 (555) 123-4567</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-blue-600 mr-3"></i>
+                                <span>info@luxurystay.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4">Business Hours</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Front Desk</span>
+                                <span>24/7</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Restaurant</span>
+                                <span>6:00 AM - 11:00 PM</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Spa & Wellness</span>
+                                <span>8:00 AM - 10:00 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <form class="space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">First Name</label>
+                                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">Last Name</label>
+                                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Email Address</label>
+                            <input type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Subject</label>
+                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Message</label>
+                            <textarea rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-hotel text-blue-400 text-2xl mr-2"></i>
+                        <span class="font-bold text-xl">LuxuryStay</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">Redefining luxury hospitality with exceptional service and unforgettable experiences.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-blue-400"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-blue-400"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-blue-400"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-blue-400"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="#rooms" class="text-gray-400 hover:text-white">Rooms & Suites</a></li>
+                        <li><a href="#booking" class="text-gray-400 hover:text-white">Book Now</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-white">About Us</a></li>
+                        <li><a href="#contact" class="text-gray-400 hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Contact Info</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li>123 Luxury Avenue</li>
+                        <li>Metropolitan City, MC 12345</li>
+                        <li>+1 (555) 123-4567</li>
+                        <li>info@luxurystay.com</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Newsletter</h3>
+                    <p class="text-gray-400 mb-4">Subscribe to receive special offers and updates</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="flex-1 px-4 py-2 rounded-l-lg bg-gray-700 text-white">
+                        <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-lg">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 LuxuryStay Hotel Management System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer text-xl">&times;</span>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Admin Login</h2>
+            <form id="adminLoginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold">
+                    Login
+                </button>
+                <div id="loginMessage" class="mt-4 text-red-500 text-center"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Admin Login Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('adminModal');
+            const adminBtn = document.getElementById('adminLoginBtn');
+            const closeModal = document.querySelector('.close-modal');
+            const loginForm = document.getElementById('adminLoginForm');
+            const loginMessage = document.getElementById('loginMessage');
+            const adminPanel = document.getElementById('adminPanel');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Check if user is already logged in
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                adminPanel.style.display = 'block';
+                adminBtn.textContent = 'Admin Panel';
+                adminBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                adminBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+
+            // Open modal
+            adminBtn.addEventListener('click', function() {
+                if (localStorage.getItem('adminLoggedIn') === 'true') {
+                    adminPanel.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    modal.style.display = 'block';
+                }
+            });
+
+            // Close modal
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Login form submission
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                // Simple validation (in real application, use secure authentication)
+                if (username === 'admin' && password === 'admin123') {
+                    // Successful login
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    modal.style.display = 'none';
+                    adminPanel.style.display = 'block';
+                    adminBtn.textContent = 'Admin Panel';
+                    adminBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    adminBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    loginMessage.textContent = '';
+                    
+                    // Scroll to admin panel
+                    adminPanel.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    loginMessage.textContent = 'Invalid username or password. Try: admin / admin123';
+                }
+            });
+
+            // Logout functionality
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('adminLoggedIn');
+                    adminPanel.style.display = 'none';
+                    adminBtn.textContent = 'Admin Login';
+                    adminBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    adminBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
