@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LuxuryStay - Premium Hotel Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    // 🔥 STEP 1: Replace with your Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // 🔥 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const adminModal = document.getElementById('adminModal');
+      const adminLoginBtn = document.getElementById('adminLoginBtn');
+      const closeModal = document.querySelector('.close-modal');
+      const adminPanel = document.getElementById('adminPanel');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const adminLoginForm = document.getElementById('adminLoginForm');
+      const bookingForm = document.querySelector('#book form');
+      const bookingsTable = document.getElementById('bookingsTableBody');
+
+      // 🧩 Admin Modal Logic
+      adminLoginBtn.addEventListener('click', () => adminModal.style.display = 'flex');
+      closeModal.addEventListener('click', () => adminModal.style.display = 'none');
+      window.addEventListener('click', e => { if (e.target === adminModal) adminModal.style.display = 'none'; });
+
+      // 🧩 Admin Login
+      adminLoginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        if (username === 'admin' && password === '1234') {
+          adminModal.style.display = 'none';
+          adminPanel.style.display = 'block';
+          renderChart();
+          listenForBookings();
+        } else {
+          alert('Invalid login credentials!');
+        }
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        adminPanel.style.display = 'none';
+        alert('Logged out successfully!');
+      });
+
+      // 🧩 Booking Form → Save to Firestore
+      bookingForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const checkIn = bookingForm.querySelector('input[type="date"]').value;
+        const checkOut = bookingForm.querySelectorAll('input[type="date"]')[1].value;
+        const guests = bookingForm.querySelector('input[type="number"]').value;
+        const roomType = bookingForm.querySelector('select').value;
+
+        try {
+          await addDoc(collection(db, "bookings"), {
+            checkIn, checkOut, guests, roomType,
+            createdAt: serverTimestamp()
+          });
+          alert('✅ Booking saved successfully!');
+          bookingForm.reset();
+        } catch (error) {
+          console.error("Error saving booking:", error);
+          alert("❌ Failed to save booking.");
+        }
+      });
+
+      // 🧩 Real-time Listener for Bookings
+      function listenForBookings() {
+        const bookingsRef = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+        onSnapshot(bookingsRef, (snapshot) => {
+          bookingsTable.innerHTML = ""; // clear table
+          snapshot.forEach(doc => {
+            const b = doc.data();
+            const row = `
+              <tr class="border-t hover:bg-gray-50">
+                <td class="p-3">${b.checkIn || '-'}</td>
+                <td class="p-3">${b.checkOut || '-'}</td>
+                <td class="p-3">${b.guests || '-'}</td>
+                <td class="p-3">${b.roomType || '-'}</td>
+              </tr>`;
+            bookingsTable.insertAdjacentHTML("beforeend", row);
+          });
+        });
+      }
+
+      // 🧩 Chart.js – Revenue Forecast
+      function renderChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+            datasets: [{
+              label: 'Projected Revenue ($)',
+              data: Array.from({length: 30}, () => Math.floor(Math.random() * 2000 + 500)),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59,130,246,0.2)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+        document.getElementById('adrValue').innerText = '$245';
+        document.getElementById('revparValue').innerText = '$218';
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50">
+  <header class="bg-blue-600 text-white p-5 flex justify-between items-center">
+    <h1 class="text-3xl font-bold">LuxuryStay</h1>
+    <button id="adminLoginBtn" class="bg-white text-blue-600 px-4 py-2 rounded-lg shadow hover:bg-gray-200">
+      <i class="fas fa-user-shield"></i> Admin Login
+    </button>
+  </header>
+
+  <!-- Booking Section -->
+  <section id="book" class="p-10 text-center">
+    <h2 class="text-3xl font-semibold mb-6 text-gray-700">Book Your Stay</h2>
+    <form class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
+      <label class="block mb-2 text-gray-600">Check-In</label>
+      <input type="date" class="w-full p-2 border rounded mb-4" required>
+
+      <label class="block mb-2 text-gray-600">Check-Out</label>
+      <input type="date" class="w-full p-2 border rounded mb-4" required>
+
+      <label class="block mb-2 text-gray-600">Guests</label>
+      <input type="number" min="1" class="w-full p-2 border rounded mb-4" required>
+
+      <label class="block mb-2 text-gray-600">Room Type</label>
+      <select class="w-full p-2 border rounded mb-4" required>
+        <option>Deluxe Room</option>
+        <option>Suite</option>
+        <option>Family Room</option>
+      </select>
+
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 w-full">Confirm Booking</button>
+    </form>
+  </section>
+
+  <!-- Admin Login Modal -->
+  <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-xl w-96 relative">
+      <button class="close-modal absolute top-3 right-3 text-gray-500 hover:text-black">
+        <i class="fas fa-times"></i>
+      </button>
+      <h3 class="text-2xl font-semibold mb-4 text-center">Admin Login</h3>
+      <form id="adminLoginForm" class="space-y-4">
+        <input id="username" type="text" placeholder="Username" class="w-full border p-2 rounded" required>
+        <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded" required>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <section id="adminPanel" class="hidden p-10">
+    <h2 class="text-3xl font-bold text-gray-700 mb-6 flex justify-between">
+      Admin Dashboard
+      <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </h2>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <h3 class="text-xl font-semibold text-gray-600">ADR</h3>
+        <p id="adrValue" class="text-3xl font-bold text-blue-600">$0</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <h3 class="text-xl font-semibold text-gray-600">RevPAR</h3>
+        <p id="revparValue" class="text-3xl font-bold text-blue-600">$0</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <h3 class="text-xl font-semibold text-gray-600">Occupancy</h3>
+        <p class="text-3xl font-bold text-blue-600">82%</p>
+      </div>
+    </div>
+
+    <canvas id="revenueChart" height="100" class="mb-8"></canvas>
+
+    <div class="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+      <h3 class="text-2xl font-semibold text-gray-700 mb-4">Live Bookings</h3>
+      <table class="min-w-full border">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="p-3 text-left">Check-In</th>
+            <th class="p-3 text-left">Check-Out</th>
+            <th class="p-3 text-left">Guests</th>
+            <th class="p-3 text-left">Room Type</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+</body>
+</html>
