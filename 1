@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LuxuryStay — Premium Hotel Management</title>
+
+  <!-- Tailwind CDN (with custom config for gold color) -->
+  <script>
+    tailwind = window.tailwind || {};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* Luxury touches */
+    :root{
+      --gold:#D4AF37;
+      --deep:#0b1220;
+      --muted:#bfc8d6;
+    }
+    body { background: linear-gradient(180deg, #061121 0%, #0b1220 60%); color: var(--muted); padding-top: 80px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .glass { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.04); }
+    .gold { color: var(--gold); }
+    .gold-bg { background: linear-gradient(90deg, rgba(212,175,55,0.15), rgba(212,175,55,0.06)); }
+    .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .btn-gold { background: linear-gradient(90deg,var(--gold), #b3891c); color: #07121b; }
+    .thin { color: rgba(255,255,255,0.65); }
+    a { text-decoration: none; }
+    /* small responsive adjustments */
+    @media (max-width: 768px){ body{ padding-top: 90px; } }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="fixed inset-x-0 top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between glass shadow-lg rounded-b-xl">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full gold-bg flex items-center justify-center border border-white/5">
+          <i class="fa-solid fa-gem text-gold"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-semibold gold">LuxuryStay</h1>
+          <div class="text-xs thin">Premium Hotel Management</div>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center gap-6">
+        <a href="#home" class="hover:underline">Home</a>
+        <a href="#rooms" class="hover:underline">Rooms</a>
+        <a href="#book" class="hover:underline">Book</a>
+        <a href="#about" class="hover:underline">About</a>
+        <button id="adminLoginBtn" class="px-4 py-2 rounded-lg btn-gold font-semibold shadow">Admin</button>
+      </div>
+
+      <!-- mobile menu toggle -->
+      <div class="md:hidden">
+        <button id="mobileMenuBtn" class="p-2 rounded-md glass"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden max-w-7xl mx-auto px-6 mt-2">
+      <div class="glass rounded-xl p-4 flex flex-col gap-3">
+        <a href="#home">Home</a>
+        <a href="#rooms">Rooms</a>
+        <a href="#book">Book</a>
+        <a href="#about">About</a>
+        <button id="adminLoginBtnMobile" class="px-4 py-2 rounded-lg btn-gold font-semibold">Admin</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="home" class="max-w-7xl mx-auto px-6 mt-6">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div class="glass rounded-2xl p-8 shadow-lg card-hover">
+        <h2 class="text-4xl font-bold gold">Experience Luxury, Redefined</h2>
+        <p class="mt-3 thin">Immerse yourself in premium comfort, world-class service and unforgettable stays.</p>
+
+        <div class="mt-6 flex gap-4">
+          <a href="#book" class="px-6 py-3 rounded-lg btn-gold font-semibold shadow">Book Now</a>
+          <a href="#rooms" class="px-6 py-3 rounded-lg border border-white/10 text-white/80">View Rooms</a>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="p-3 gold-bg rounded-lg">
+            <div class="text-sm thin">Check-in</div>
+            <div class="font-semibold">Flexible</div>
+          </div>
+          <div class="p-3 gold-bg rounded-lg">
+            <div class="text-sm thin">Concierge</div>
+            <div class="font-semibold">24/7</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl overflow-hidden shadow-2xl">
+        <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1500&q=80" class="w-full h-full object-cover rounded-2xl">
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN: booking form left, admin panel right -->
+  <main class="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-3 gap-8">
+
+    <!-- Booking Card -->
+    <section id="book" class="lg:col-span-2 glass rounded-2xl p-8 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <h3 class="text-2xl font-semibold gold">Create Booking</h3>
+        <div class="text-sm thin">Secure & synced to Firebase</div>
+      </div>
+
+      <form id="bookingForm" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="text-sm thin">Guest Name</label>
+          <input id="customerName" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10 outline-none" placeholder="e.g. John Doe" required>
+        </div>
+
+        <div class="col-span-2">
+          <label class="text-sm thin">Guest Email</label>
+          <input id="customerEmail" type="email" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10" placeholder="you@domain.com" required>
+        </div>
+
+        <div>
+          <label class="text-sm thin">Check-in</label>
+          <input id="checkInDate" type="date" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+        </div>
+
+        <div>
+          <label class="text-sm thin">Check-out</label>
+          <input id="checkOutDate" type="date" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+        </div>
+
+        <div>
+          <label class="text-sm thin">Guests</label>
+          <input id="guestNumber" type="number" min="1" value="1" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+        </div>
+
+        <div>
+          <label class="text-sm thin">Room Type</label>
+          <select id="roomType" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+            <option value="deluxe" data-price="200">Deluxe — $200/night</option>
+            <option value="executive" data-price="350">Executive — $350/night</option>
+            <option value="presidential" data-price="500">Presidential — $500/night</option>
+          </select>
+        </div>
+
+        <div class="col-span-2">
+          <label class="text-sm thin">Rate per night ($)</label>
+          <input id="roomPerNight" type="number" min="0" step="0.01" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+        </div>
+
+        <div class="col-span-2">
+          <label class="text-sm thin">Guest Satisfaction</label>
+          <select id="guestSatisfaction" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
+            <option value="pending">Pending</option>
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="average">Average</option>
+            <option value="poor">Poor</option>
+          </select>
+        </div>
+
+        <!-- summary -->
+        <div id="bookingSummary" class="col-span-2 hidden mt-4 p-4 rounded-lg gold-bg">
+          <div class="flex justify-between items-center text-black">
+            <div>
+              <div class="text-xs thin">Nights</div>
+              <div id="summaryNights" class="font-semibold text-lg">0</div>
+            </div>
+            <div>
+              <div class="text-xs thin">Guests</div>
+              <div id="summaryGuests" class="font-semibold text-lg">1</div>
+            </div>
+            <div>
+              <div class="text-xs thin">Rate</div>
+              <div id="summaryRate" class="font-semibold text-lg">$0</div>
+            </div>
+            <div>
+              <div class="text-xs thin">Total</div>
+              <div id="summaryTotal" class="font-semibold text-lg">$0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-2">
+          <button id="addBookingBtn" type="button" class="w-full mt-4 py-3 rounded-lg btn-gold font-semibold shadow">Add Booking</button>
+        </div>
+      </form>
+
+      <div class="mt-8 grid md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg glass text-center">
+          <div class="text-sm thin">Contactless Check-in</div>
+          <div class="font-semibold gold mt-2">Available</div>
+        </div>
+        <div class="p-4 rounded-lg glass text-center">
+          <div class="text-sm thin">Complimentary</div>
+          <div class="font-semibold gold mt-2">Breakfast</div>
+        </div>
+        <div class="p-4 rounded-lg glass text-center">
+          <div class="text-sm thin">Ocean View</div>
+          <div class="font-semibold gold mt-2">Selected Rooms</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin Panel -->
+    <aside id="adminPanel" class="hidden glass rounded-2xl p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div>
+          <h4 class="text-lg font-semibold gold">Admin Dashboard</h4>
+          <div class="text-xs thin">Live from Realtime DB</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="roomsAvailable" type="number" min="1" value="120" class="w-20 p-2 rounded-lg bg-transparent border border-white/10 text-center" />
+          <button id="logoutBtn" class="px-3 py-2 rounded-lg border border-white/10 text-sm">Logout</button>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <div class="p-4 rounded-lg gold-bg text-black text-center">
+          <div class="text-xs thin">Bookings</div>
+          <div id="totalBookings" class="text-2xl font-bold">0</div>
+        </div>
+        <div class="p-4 rounded-lg gold-bg text-black text-center">
+          <div class="text-xs thin">Revenue</div>
+          <div id="totalRevenue" class="text-2xl font-bold">$0</div>
+        </div>
+        <div class="p-4 rounded-lg gold-bg text-black text-center">
+          <div class="text-xs thin">Nights</div>
+          <div id="totalNights" class="text-2xl font-bold">0</div>
+        </div>
+        <div class="p-4 rounded-lg gold-bg text-black text-center">
+          <div class="text-xs thin">Guests</div>
+          <div id="totalGuests" class="text-2xl font-bold">0</div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="text-sm thin">ADR</div>
+        <div id="adrValue" class="text-lg font-semibold gold mt-1">$0</div>
+        <div class="text-sm thin mt-2">RevPAR</div>
+        <div id="revparValue" class="text-lg font-semibold gold mt-1">$0</div>
+      </div>
+
+      <div class="mt-4">
+        <canvas id="revenueChart" height="150"></canvas>
+      </div>
+
+      <div class="mt-4">
+        <h5 class="text-sm thin mb-2">Recent Bookings</h5>
+        <div class="max-h-48 overflow-auto rounded-lg border border-white/6 p-2">
+          <table class="w-full text-sm">
+            <thead class="text-left text-xs thin">
+              <tr><th>Guest</th><th class="text-right">Total</th><th></th></tr>
+            </thead>
+            <tbody id="bookingsList">
+              <tr><td colspan="3" class="py-4 text-center thin">No bookings yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ABOUT / CONTACT / FOOTER -->
+  <section id="about" class="max-w-7xl mx-auto px-6 py-8">
+    <div class="glass rounded-2xl p-8">
+      <h3 class="text-xl font-semibold gold">About LuxuryStay</h3>
+      <p class="thin mt-2">Since 2010, LuxuryStay has offered refined hospitality with classic style and modern conveniences.</p>
+    </div>
+  </section>
+
+  <footer class="max-w-7xl mx-auto px-6 py-8 thin text-center">
+    <div class="text-sm">&copy; 2025 LuxuryStay — All rights reserved.</div>
+  </footer>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div id="adminModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="w-96 bg-gradient-to-b from-[#07121b] to-[#0a1722] p-6 rounded-2xl border border-white/6 shadow-xl">
+      <button id="closeAdminModal" class="float-right text-white/60"><i class="fa-solid fa-xmark"></i></button>
+      <h4 class="text-lg font-semibold gold">Admin Login</h4>
+      <p class="text-xs thin mb-4">Use <strong>admin</strong> / <strong>1234</strong> to access dashboard</p>
+
+      <form id="adminLoginForm" class="space-y-3">
+        <input id="adminUsername" class="w-full p-3 rounded-lg bg-transparent border border-white/10" placeholder="Username" value="admin" required />
+        <input id="adminPassword" class="w-full p-3 rounded-lg bg-transparent border border-white/10" placeholder="Password" value="1234" type="password" required />
+        <button class="w-full py-3 rounded-lg btn-gold font-semibold">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <script>
+    /*******************************
+     * FIREBASE CONFIG (your project)
+     *******************************/
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDN9-FOx1bMMTmGaHpsvt7MO0eZbJF0mVw",
+      authDomain: "luxurystay-f4d48.firebaseapp.com",
+      databaseURL: "https://luxurystay-f4d48-default-rtdb.firebaseio.com",
+      projectId: "luxurystay-f4d48",
+      storageBucket: "luxurystay-f4d48.firebasestorage.app",
+      messagingSenderId: "957241383544",
+      appId: "1:957241383544:web:a8a95c3e528717d6a92b8d",
+      measurementId: "G-PSBW82LPQ8"
+    };
+
+    // init firebase
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    // elements
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminLoginBtnMobile = document.getElementById('adminLoginBtnMobile');
+    const adminModal = document.getElementById('adminModal');
+    const closeAdminModal = document.getElementById('closeAdminModal');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const adminPanel = document.getElementById('adminPanel');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const addBookingBtn = document.getElementById('addBookingBtn');
+    const bookingForm = document.getElementById('bookingForm');
+    const roomTypeEl = document.getElementById('roomType');
+    const roomPerNightEl = document.getElementById('roomPerNight');
+    const checkInEl = document.getElementById('checkInDate');
+    const checkOutEl = document.getElementById('checkOutDate');
+    const guestNumberEl = document.getElementById('guestNumber');
+
+    const bookingSummaryEl = document.getElementById('bookingSummary');
+    const summaryNightsEl = document.getElementById('summaryNights');
+    const summaryGuestsEl = document.getElementById('summaryGuests');
+    const summaryRateEl = document.getElementById('summaryRate');
+    const summaryTotalEl = document.getElementById('summaryTotal');
+
+    const totalBookingsEl = document.getElementById('totalBookings');
+    const totalRevenueEl = document.getElementById('totalRevenue');
+    const totalNightsEl = document.getElementById('totalNights');
+    const totalGuestsEl = document.getElementById('totalGuests');
+    const roomsAvailableEl = document.getElementById('roomsAvailable');
+    const adrValueEl = document.getElementById('adrValue');
+    const revparValueEl = document.getElementById('revparValue');
+    const bookingsListEl = document.getElementById('bookingsList');
+
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    let revenueChart = null;
+    const DAYS_RANGE = 30;
+
+    // UI handlers
+    mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    adminLoginBtn.addEventListener('click', () => adminModal.classList.remove('hidden'));
+    adminLoginBtnMobile && adminLoginBtnMobile.addEventListener('click', () => adminModal.classList.remove('hidden'));
+    closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
+    window.addEventListener('click', e => { if (e.target === adminModal) adminModal.classList.add('hidden'); });
+
+    // booking helpers
+    function setRoomPriceFromType(){
+      const p = roomTypeEl.options[roomTypeEl.selectedIndex].getAttribute('data-price') || '0';
+      roomPerNightEl.value = p;
+      calculateStayDetails();
+    }
+    roomTypeEl.addEventListener('change', setRoomPriceFromType);
+
+    [checkInEl, checkOutEl, roomPerNightEl, guestNumberEl].forEach(el => el.addEventListener('input', calculateStayDetails));
+
+    function calculateStayDetails(){
+      const checkIn = checkInEl.value, checkOut = checkOutEl.value;
+      const roomPerNight = parseFloat(roomPerNightEl.value) || 0;
+      const guestNumber = parseInt(guestNumberEl.value) || 1;
+      if(!checkIn || !checkOut || roomPerNight <= 0 || guestNumber <= 0){ bookingSummaryEl.classList.add('hidden'); return null; }
+      const ci = new Date(checkIn), co = new Date(checkOut);
+      const nights = Math.ceil((co - ci)/(1000*60*60*24));
+      if(nights <= 0){ bookingSummaryEl.classList.add('hidden'); return null; }
+      const totalPrice = roomPerNight * nights * guestNumber;
+      summaryNightsEl.textContent = nights;
+      summaryGuestsEl.textContent = guestNumber;
+      summaryRateEl.textContent = '$' + roomPerNight.toFixed(2);
+      summaryTotalEl.textContent = '$' + totalPrice.toFixed(2);
+      bookingSummaryEl.classList.remove('hidden');
+      return { nights, guestNumber, totalPrice };
+    }
+
+    // save booking
+    addBookingBtn.addEventListener('click', () => {
+      const customerName = document.getElementById('customerName').value.trim();
+      const customerEmail = document.getElementById('customerEmail').value.trim();
+      const checkInDate = checkInEl.value;
+      const checkOutDate = checkOutEl.value;
+      const roomType = roomTypeEl.value;
+      const roomPerNight = parseFloat(roomPerNightEl.value) || 0;
+      const guestNumber = parseInt(guestNumberEl.value) || 1;
+      const guestSatisfaction = document.getElementById('guestSatisfaction').value;
+
+      if(!customerName || !customerEmail || !checkInDate || !checkOutDate || !roomPerNight || !guestNumber){
+        alert('Please fill all required fields.');
+        return;
+      }
+
+      const stay = calculateStayDetails();
+      if(!stay){ alert('Check-out must be after check-in.'); return; }
+
+      const bookingData = {
+        customer_name: customerName,
+        customer_email: customerEmail,
+        check_in_date: checkInDate,
+        check_out_date: checkOutDate,
+        room_type: roomType,
+        room_per_night: roomPerNight,
+        spend_nights: stay.nights,
+        guest_number: guestNumber,
+        guest_satisfaction: guestSatisfaction,
+        total_price: stay.totalPrice,
+        booking_timestamp: new Date().toISOString(),
+        status: 'confirmed'
+      };
+
+      addBookingBtn.classList.add('opacity-60');
+      db.ref('bookings').push(bookingData)
+        .then(() => {
+          alert('Booking saved ✓');
+          bookingForm.reset();
+          setRoomPriceFromType();
+          bookingSummaryEl.classList.add('hidden');
+        })
+        .catch(err => alert('Error: ' + err.message))
+        .finally(()=> addBookingBtn.classList.remove('opacity-60'));
+    });
+
+    // admin login (local credentials: admin / 1234)
+    adminLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value.trim();
+      if(u === 'admin' && p === '1234'){
+        adminModal.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        startRealtimeBookings();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        alert('Invalid credentials (use admin / 1234)');
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      stopRealtimeBookings();
+      adminPanel.classList.add('hidden');
+      clearStatsUI();
+      if(revenueChart){ revenueChart.destroy(); revenueChart = null; }
+      alert('Logged out');
+    });
+
+    // realtime bookings listener
+    let bookingsRef = null;
+    function startRealtimeBookings(){
+      if(bookingsRef) return;
+      bookingsRef = db.ref('bookings');
+      bookingsRef.on('value', snapshot => {
+        const val = snapshot.val();
+        const bookings = val ? Object.entries(val).map(([id,data]) => ({ id, ...data })) : [];
+        renderBookingsList(bookings);
+        computeAndRenderStats(bookings);
+        renderRevenueChart(bookings);
+      });
+    }
+    function stopRealtimeBookings(){
+      if(!bookingsRef) return;
+      bookingsRef.off();
+      bookingsRef = null;
+    }
+
+    function renderBookingsList(bookings){
+      bookingsListEl.innerHTML = '';
+      if(!bookings.length){
+        bookingsListEl.innerHTML = '<tr><td colspan="3" class="py-4 text-center thin">No bookings yet</td></tr>';
+        return;
+      }
+      bookings.slice().reverse().forEach(b => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-2">${escapeHtml(b.customer_name)}</td>
+          <td class="py-2 text-right font-semibold">$${Number(b.total_price||0).toFixed(2)}</td>
+          <td class="py-2 text-right"><button data-id="${b.id}" class="text-red-400 hover:underline deleteBtn">Delete</button></td>
+        `;
+        bookingsListEl.appendChild(tr);
+      });
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute('data-id');
+          if(!confirm('Delete booking?')) return;
+          db.ref('bookings/' + id).remove().catch(err => alert('Delete failed: ' + err.message));
+        };
+      });
+    }
+
+    function computeAndRenderStats(bookings){
+      const totalBookings = bookings.length;
+      let totalRevenue = 0, totalNights = 0, totalGuests = 0;
+      bookings.forEach(b => {
+        totalRevenue += Number(b.total_price || 0);
+        totalNights += Number(b.spend_nights || 0);
+        totalGuests += Number(b.guest_number || 0) || 1;
+      });
+
+      totalBookingsEl.textContent = totalBookings;
+      totalRevenueEl.textContent = '$' + totalRevenue.toFixed(2);
+      totalNightsEl.textContent = totalNights;
+      totalGuestsEl.textContent = totalGuests;
+
+      const adr = totalNights > 0 ? (totalRevenue / totalNights) : 0;
+      adrValueEl.textContent = '$' + adr.toFixed(2);
+
+      const roomsAvailable = parseInt(roomsAvailableEl.value) || 1;
+      const revpar = (roomsAvailable > 0) ? (totalRevenue / (roomsAvailable * DAYS_RANGE)) : 0;
+      revparValueEl.textContent = '$' + revpar.toFixed(2);
+    }
+
+    function renderRevenueChart(bookings){
+      // last DAYS_RANGE days
+      const days = [];
+      const now = new Date();
+      for(let i = DAYS_RANGE - 1; i >= 0; i--){
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        days.push(formatDateKey(d));
+      }
+      const revenueByDay = {}; days.forEach(k=> revenueByDay[k]=0);
+
+      bookings.forEach(b => {
+        let key = b.check_in_date || (b.booking_timestamp ? formatDateKey(new Date(b.booking_timestamp)) : null);
+        if(!key) return;
+        if(revenueByDay.hasOwnProperty(key)) revenueByDay[key] += Number(b.total_price || 0);
+      });
+
+      const labels = days.map(k => k.slice(5));
+      const data = days.map(k => revenueByDay[k] || 0);
+
+      if(revenueChart){
+        revenueChart.data.labels = labels;
+        revenueChart.data.datasets[0].data = data;
+        revenueChart.update();
+      } else {
+        revenueChart = new Chart(revenueCtx, {
+          type: 'line',
+          data: { labels, datasets: [{ label:'Revenue', data, tension:0.25, fill:true, backgroundColor:'rgba(212,175,55,0.12)', borderColor:'rgba(212,175,55,0.9)', pointRadius:2 }] },
+          options: { responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true } } }
+        });
+      }
+    }
+
+    // util
+    function formatDateKey(d){ if(!(d instanceof Date)) d = new Date(d); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
+    function escapeHtml(text){ if(!text) return ''; return String(text).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function clearStatsUI(){
+      totalBookingsEl.textContent='0'; totalRevenueEl.textContent='$0'; totalNightsEl.textContent='0'; totalGuestsEl.textContent='0'; adrValueEl.textContent='$0'; revparValueEl.textContent='$0';
+      bookingsListEl.innerHTML = '<tr><td colspan="3" class="py-4 text-center thin">No bookings yet</td></tr>';
+    }
+
+    // roomsAvailable change handler
+    roomsAvailableEl.addEventListener('input', () => {
+      db.ref('bookings').once('value').then(s => {
+        const val = s.val(); const bookings = val ? Object.entries(val).map(([id,data])=>({id,...data})) : [];
+        computeAndRenderStats(bookings);
+        renderRevenueChart(bookings);
+      });
+    });
+
+    // set defaults
+    (function setDefaultDates(){
+      const today = new Date();
+      const y = today.getFullYear(), m = String(today.getMonth()+1).padStart(2,'0'), d = String(today.getDate()).padStart(2,'0');
+      const inDate = `${y}-${m}-${d}`; const out = new Date(today); out.setDate(out.getDate()+1); const y2=out.getFullYear(), m2=String(out.getMonth()+1).padStart(2,'0'), d2=String(out.getDate()).padStart(2,'0');
+      document.getElementById('checkInDate').value = inDate;
+      document.getElementById('checkOutDate').value = `${y2}-${m2}-${d2}`;
+      setRoomPriceFromType();
+      calculateStayDetails();
+    })();
+
+  </script>
+</body>
+</html>
