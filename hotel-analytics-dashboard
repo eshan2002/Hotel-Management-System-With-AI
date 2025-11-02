@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n Data Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: #15803d;
+        }
+
+        .btn-gray {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-gray:hover {
+            background: #374151;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .tabs {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .tab:hover {
+            background: #e5e7eb;
+        }
+
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .metric-card {
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-card-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .metric-card-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .metric-card-yellow {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .metric-card-purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .tip {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tip-text {
+            font-size: 0.875rem;
+            color: #1e40af;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .chart-container-tall {
+            height: 350px;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #6b7280;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .insight-card, .recommendation-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-card {
+            background: #dbeafe;
+        }
+
+        .recommendation-card {
+            background: #d1fae5;
+        }
+
+        .insight-number, .recommendation-check {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .insight-number {
+            background: #2563eb;
+        }
+
+        .recommendation-check {
+            background: #16a34a;
+        }
+
+        .insight-text, .recommendation-text {
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        .room-legend {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .room-legend-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .room-color {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .room-name {
+            color: #374151;
+        }
+
+        .room-value {
+            font-weight: 600;
+        }
+
+        .forecast-card {
+            border-radius: 0.5rem;
+            padding: 2rem;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .forecast-card-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .forecast-card-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .forecast-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .forecast-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .forecast-badge {
+            display: inline-block;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>n8n Data Visualizer</h1>
+                <p>Hotel Management Analytics Dashboard</p>
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-blue" onclick="loadSampleData()">
+                    <span>🔄</span> Load Sample
+                </button>
+                <label class="btn btn-green">
+                    <span>📤</span> Upload JSON
+                    <input type="file" accept=".json" onchange="handleFileUpload(event)">
+                </label>
+                <button class="btn btn-gray" onclick="downloadJson()">
+                    <span>📥</span> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchView('overview')">Overview</button>
+            <button class="tab" onclick="switchView('revenue')">Revenue</button>
+            <button class="tab" onclick="switchView('guests')">Guests</button>
+            <button class="tab" onclick="switchView('predictions')">Predictions</button>
+            <button class="tab" onclick="switchView('raw')">Raw</button>
+        </div>
+
+        <!-- Raw Data View -->
+        <div id="raw-view" class="view">
+            <div class="card">
+                <h3 class="card-title">Paste n8n Output JSON</h3>
+                <textarea id="json-input" placeholder="Paste your n8n workflow output JSON here..."></textarea>
+                <div id="error-message" class="error"></div>
+                <div class="tip">
+                    <p class="tip-text"><strong>Tip:</strong> Copy the JSON output from your n8n workflow and paste it here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview View -->
+        <div id="overview-view" class="view active">
+            <div class="grid grid-4">
+                <div class="metric-card metric-card-blue">
+                    <div class="metric-header">
+                        <span style="font-size: 2rem;">💰</span>
+                        <span class="metric-badge">Current</span>
+                    </div>
+                    <div class="metric-value" id="total-revenue">{{ $json.totalRevenue }}</div>
+                    <div class="metric-label">Total Revenue</div>
+                </div>
+                <div class="metric-card metric-card-green">
+                    <div class="metric-header">
+                        <span style="font-size: 2rem;">👥</span>
+                        <span class="metric-badge">Total</span>
+                    </div>
+                    <div class="metric-value" id="total-guests">{{ $json.totalGuests }}</div>
+                    <div class="metric-label">Total Guests</div>
+                </div>
+                <div class="metric-card metric-card-yellow">
+                    <div class="metric-header">
+                        <span style="font-size: 2rem;">⭐</span>
+                        <span class="metric-badge">Rating</span>
+                    </div>
+                    <div class="metric-value" id="avg-satisfaction">{{ $json.avgSatisfaction }}/5</div>
+                    <div class="metric-label">Avg Satisfaction</div>
+                </div>
+                <div class="metric-card metric-card-purple">
+                    <div class="metric-header">
+                        <span style="font-size: 2rem;">📅</span>
+                        <span class="metric-badge">Average</span>
+                    </div>
+                    <div class="metric-value" id="avg-nights">{{ $json.avgNightsStay }}</div>
+                    <div class="metric-label">Nights per Stay</div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3 class="card-title">Performance Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Room Type Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="room-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue View -->
+        <div id="revenue-view" class="view">
+            <div class="card">
+                <h3 class="card-title">Revenue Trend</h3>
+                <div class="chart-container chart-container-tall">
+                    <canvas id="revenue-chart"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-3">
+                <div class="card">
+                    <p class="stat-label">Total Revenue</p>
+                    <p class="stat-value" style="color: #2563eb;" id="revenue-total">{{ $json.totalRevenue }}</p>
+                </div>
+                <div class="card">
+                    <p class="stat-label">Avg per Booking</p>
+                    <p class="stat-value" style="color: #16a34a;" id="revenue-avg">{{ $json.avgRevenuePerBooking }}</p>
+                </div>
+                <div class="card">
+                    <p class="stat-label">Total Bookings</p>
+                    <p class="stat-value" style="color: #8b5cf6;" id="revenue-bookings">{{ $json.totalBookings }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guests View -->
+        <div id="guests-view" class="view">
+            <div class="card">
+                <h3 class="card-title">Guest Arrivals by Month</h3>
+                <div class="chart-container chart-container-tall">
+                    <canvas id="guests-chart"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4 class="card-title">Guest Statistics</h4>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Guests</span>
+                        <span class="stat-value" id="guests-total">{{ $json.totalGuests }}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Avg Nights Stay</span>
+                        <span class="stat-value" id="guests-nights">{{ $json.avgNightsStay }}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Satisfaction Score</span>
+                        <span class="stat-value" id="guests-satisfaction">{{ $json.avgSatisfaction }}/5</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <h4 class="card-title">Room Preferences</h4>
+                    <div id="room-preferences"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions View -->
+        <div id="predictions-view" class="view">
+            <div class="grid grid-2">
+                <div class="forecast-card forecast-card-green">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.8;">📈</span>
+                    <p class="forecast-label">Next Year Revenue Forecast</p>
+                    <p class="forecast-value" id="forecast-revenue">{{ $json.predictions.nextYearRevenue }}</p>
+                    <p class="forecast-badge" id="forecast-growth">+{{ $json.predictions.growthRate }}% Growth Rate</p>
+                </div>
+                <div class="forecast-card forecast-card-blue">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.8;">👥</span>
+                    <p class="forecast-label">Expected Guests Next Year</p>
+                    <p class="forecast-value" id="forecast-guests">{{ $json.predictions.nextYearGuests }}</p>
+                    <p class="forecast-badge">Based on current trends</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="card-title">AI-Generated Insights</h3>
+                <div id="insights-container"></div>
+            </div>
+            <div class="card">
+                <h3 class="card-title">Recommendations</h3>
+                <div id="recommendations-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let charts = {};
+
+        const sampleData = {
+            totalRevenue: 12500,
+            totalGuests: 45,
+            totalBookings: 28,
+            avgSatisfaction: 4.3,
+            avgNightsStay: 2.5,
+            avgRevenuePerBooking: 446.43,
+            roomTypes: {
+                "Deluxe": 12,
+                "Suite": 8,
+                "Standard": 8
+            },
+            monthlyData: [
+                { month: "Jul", revenue: 2100, guests: 15, bookings: 8 },
+                { month: "Aug", revenue: 3200, guests: 22, bookings: 12 },
+                { month: "Sep", revenue: 2800, guests: 18, bookings: 10 },
+                { month: "Oct", revenue: 4400, guests: 28, bookings: 15 }
+            ],
+            predictions: {
+                nextYearRevenue: 172500,
+                nextYearGuests: 621,
+                growthRate: 15,
+                insights: [
+                    "Revenue trending upward with 15% growth potential",
+                    "Guest satisfaction above industry average (4.3/5)",
+                    "Average stay duration optimal at 2.5 nights"
+                ],
+                recommendations: [
+                    "Focus on Suite bookings - highest revenue per night",
+                    "Implement loyalty program for repeat customers",
+                    "Optimize pricing during peak seasons"
+                ]
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(viewName + '-view').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function loadSampleData() {
+            currentData = sampleData;
+            document.getElementById('json-input').value = JSON.stringify(sampleData, null, 2);
+            document.getElementById('error-message').textContent = '';
+            updateDashboard();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    document.getElementById('json-input').value = content;
+                    try {
+                        currentData = JSON.parse(content);
+                        document.getElementById('error-message').textContent = '';
+                        updateDashboard();
+                    } catch (err) {
+                        document.getElementById('error-message').textContent = 'Invalid JSON file';
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function downloadJson() {
+            const dataStr = document.getElementById('json-input').value || JSON.stringify(sampleData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', 'hotel-data.json');
+            link.click();
+        }
+
+        document.getElementById('json-input').addEventListener('input', (e) => {
+            try {
+                currentData = JSON.parse(e.target.value);
+                document.getElementById('error-message').textContent = '';
+                updateDashboard();
+            } catch (err) {
+                document.getElementById('error-message').textContent = 'Invalid JSON format';
+            }
+        });
+
+        function updateDashboard() {
+            if (!currentData) return;
+
+            // Update metrics
+            document.getElementById('total-revenue').textContent = '$' + currentData.totalRevenue.toLocaleString();
+            document.getElementById('total-guests').textContent = currentData.totalGuests;
+            document.getElementById('avg-satisfaction').textContent = currentData.avgSatisfaction.toFixed(1) + '/5';
+            document.getElementById('avg-nights').textContent = currentData.avgNightsStay.toFixed(1);
+
+            // Revenue view
+            document.getElementById('revenue-total').textContent = '$' + currentData.totalRevenue.toLocaleString();
+            document.getElementById('revenue-avg').textContent = '$' + currentData.avgRevenuePerBooking.toFixed(2);
+            document.getElementById('revenue-bookings').textContent = currentData.totalBookings;
+
+            // Guests view
+            document.getElementById('guests-total').textContent = currentData.totalGuests;
+            document.getElementById('guests-nights').textContent = currentData.avgNightsStay.toFixed(1);
+            document.getElementById('guests-satisfaction').textContent = currentData.avgSatisfaction.toFixed(1) + '/5';
+
+            // Room preferences
+            const roomColors = ['#3B82F6', '#10B981', '#F59E0B'];
+            const roomPrefs = document.getElementById('room-preferences');
+            roomPrefs.innerHTML = '';
+            Object.entries(currentData.roomTypes).forEach(([name, value], index) => {
+                const total = Object.values(currentData.roomTypes).reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                roomPrefs.innerHTML += `
+                    <div class="room-legend">
+                        <div class="room-legend-left">
+                            <div class="room-color" style="background: ${roomColors[index]}"></div>
+                            <span class="room-name">${name}</span>
+                        </div>
+                        <span class="room-value">${value} (${percentage}%)</span>
+                    </div>
+                `;
+            });
+
+            // Predictions
+            if (currentData.predictions) {
+                document.getElementById('forecast-revenue').textContent = '$' + currentData.predictions.nextYearRevenue.toLocaleString();
+                document.getElementById('forecast-guests').textContent = currentData.predictions.nextYearGuests.toLocaleString();
+                document.getElementById('forecast-growth').textContent = '+' + currentData.predictions.growthRate + '% Growth Rate';
+
+                // Insights
+                const insightsContainer = document.getElementById('insights-container');
+                insightsContainer.innerHTML = '';
+                currentData.predictions.insights.forEach((insight, index) => {
+                    insightsContainer.innerHTML += `
+                        <div class="insight-card">
+                            <div class="insight-number">${index + 1}</div>
+                            <div class="insight-text">${insight}</div>
+                        </div>
+                    `;
+                });
+
+                // Recommendations
+                const recsContainer = document.getElementById('recommendations-container');
+                recsContainer.innerHTML = '';
+                currentData.predictions.recommendations.forEach((rec) => {
+                    recsContainer.innerHTML += `
+                        <div class="recommendation-card">
+                            <div class="recommendation-check">✓</div>
+                            <div class="recommendation-text">${rec}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            // Performance Chart
+            const perfData = [
+                (currentData.totalRevenue / 15000) * 100,
+                (currentData.avgSatisfaction / 5) * 100,
+                (currentData.totalBookings / 50) * 100,
+                75,
+                (currentData.totalGuests / 100) * 100
+            ];
+
+            charts.performance = new Chart(document.getElementById('performance-chart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Revenue', 'Satisfaction', 'Bookings', 'Occupancy', 'Guests'],
+                    datasets: [{
+                        label: 'Performance',
+                        data: perfData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Room Distribution Chart
+            const roomLabels = Object.keys(currentData.roomTypes);
+            const roomValues = Object.values(currentData.roomTypes);
+            const roomColors = ['#3B82F6', '#10B981', '#F59E0B'];
+
+            charts.rooms = new Chart(document.getElementById('room-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: roomLabels,
+                    datasets: [{
+                        data: roomValues,
+                        backgroundColor: roomColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Revenue Chart
+            charts.revenue = new Chart(document.getElementById('revenue-chart'), {
+                type: 'line',
+                data: {
+                    labels: currentData.monthlyData.map(d => d.month),
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: currentData.monthlyData.map(d => d.revenue),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Guests Chart
+            charts.guests = new Chart(document.getElementById('guests-chart'), {
+                type: 'bar',
+                data: {
+                    labels: currentData.monthlyData.map(d => d.month),
+                    datasets: [
+                        {
+                            label: 'Number of Guests',
+                            data: currentData.monthlyData.map(d => d.guests),
+                            backgroundColor: 'rgb(16, 185, 129)'
+                        },
+                        {
+                            label: 'Number of Bookings',
+                            data: currentData.monthlyData.map(d => d.bookings),
+                            backgroundColor: 'rgb(245, 158, 11)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Load sample data on page load
+        window.addEventListener('load', () => {
+            loadSampleData();
+        });
+    </script>
+</body>
+</html>
