@@ -137,9 +137,10 @@
         <div>
           <label class="text-sm thin">Room Type</label>
           <select id="roomType" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
-            <option value="deluxe" data-price="200">Deluxe — $200/night</option>
-            <option value="executive" data-price="350">Executive — $350/night</option>
-            <option value="presidential" data-price="500">Presidential — $500/night</option>
+            <option value="standard" data-price="200">Standard — $100/night</option>
+            <option value="deluxe" data-price="350">Deluxe — $150/night</option>
+	    <option value="suite" data-price="350">Suite — $350/night</option>
+            <option value="presidential_suite" data-price="500">Presidential Suite — $500/night</option>
           </select>
         </div>
 
@@ -151,11 +152,11 @@
         <div class="col-span-2">
           <label class="text-sm thin">Guest Satisfaction</label>
           <select id="guestSatisfaction" class="mt-1 w-full p-3 rounded-lg bg-transparent border border-white/10">
-            <option value="pending">Pending</option>
-            <option value="excellent">Excellent</option>
-            <option value="good">Good</option>
-            <option value="average">Average</option>
-            <option value="poor">Poor</option>
+            <option value="5">Excellent</option>
+            <option value="4">Good</option>
+            <option value="3">Satisfied</option>
+            <option value="2">Average</option>
+            <option value="1">Poor</option>
           </select>
         </div>
 
