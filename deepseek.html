@@ -53,10 +53,40 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    /* Fix for date input in dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(1);
       cursor: pointer;
+    }
+
+    /* Chatbot Styles */
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .chat-appear {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .typing-indicator {
+      animation: pulse 1.5s infinite;
+    }
+    #chat-open-btn {
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+    }
+    #chat-open-btn:hover {
+      box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+    }
+    .chat-gold-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
     }
   </style>
 </head>
@@ -408,6 +438,9 @@
   </div>
 </div>
 
+<!-- AI CHATBOT CONTAINER -->
+<div id="chatbot-container"></div>
+
 <!-- FOOTER -->
 <footer class="bg-gray-950 py-12 border-t border-gray-800">
   <div class="container mx-auto px-4">
@@ -442,13 +475,461 @@
       </div>
     </div>
     <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-      <p>&copy; 2024 LuxuryStay. All rights reserved.</p>
+      <p>&copy; 2024 LuxuryStay. All rights reserved. | Powered by AI Concierge</p>
     </div>
   </div>
 </footer>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <script>
-  // Firebase Configuration
+  // ============================================
+  // CHATBOT CONFIGURATION
+  // ============================================
+  const CHATBOT_CONFIG = {
+    webhookUrl: 'https://YOUR-INSTANCE.app.n8n.cloud/webhook/hotel-chatbot',
+    bearerToken: 'Bearer sk_hotel_secret_12345',
+    botName: 'LuxuryStay AI Concierge',
+    welcomeMessage: '✨ Welcome to LuxuryStay! I\'m your AI concierge. I can help you with:\n\n🏨 Room information & availability\n📅 Booking assistance\n🍽️ Restaurant recommendations\n🏊 Amenities & services\n📍 Local attractions\n\nHow may I assist you today?',
+    maxRetries: 2,
+    timeout: 30000
+  };
+
+  // ============================================
+  // HOTEL CHATBOT CLASS
+  // ============================================
+  class LuxuryStayChatbot {
+    constructor() {
+      this.isOpen = false;
+      this.messages = [
+        {
+          type: 'bot',
+          text: CHATBOT_CONFIG.welcomeMessage,
+          time: this.getTime()
+        }
+      ];
+      this.isLoading = false;
+      this.retryCount = 0;
+      this.init();
+    }
+
+    init() {
+      this.loadMessages();
+      this.render();
+      this.attachEventListeners();
+    }
+
+    getTime() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    getSessionId() {
+      let sessionId = localStorage.getItem('chatSessionId');
+      if (!sessionId) {
+        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('chatSessionId', sessionId);
+      }
+      return sessionId;
+    }
+
+    saveMessages() {
+      try {
+        localStorage.setItem('chatMessages', JSON.stringify(this.messages));
+      } catch (e) {
+        console.warn('Could not save messages:', e);
+      }
+    }
+
+    loadMessages() {
+      try {
+        const saved = localStorage.getItem('chatMessages');
+        if (saved) {
+          this.messages = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.warn('Could not load messages:', e);
+      }
+    }
+
+    clearHistory() {
+      if (confirm('Clear chat history?')) {
+        this.messages = [
+          {
+            type: 'bot',
+            text: CHATBOT_CONFIG.welcomeMessage,
+            time: this.getTime()
+          }
+        ];
+        this.saveMessages();
+        this.render();
+        this.attachEventListeners();
+      }
+    }
+
+    render() {
+      const container = document.getElementById('chatbot-container');
+      container.innerHTML = `
+        <div class="fixed bottom-6 right-6 z-50">
+          ${!this.isOpen ? this.renderButton() : this.renderChatWindow()}
+        </div>
+      `;
+    }
+
+    renderButton() {
+      return `
+        <button id="chat-open-btn" class="chat-gold-gradient text-black rounded-full px-6 py-4 shadow-lg transition-all duration-300 hover:scale-110 flex items-center gap-3 font-bold text-lg">
+          <i class="fas fa-robot text-2xl"></i>
+          <span>AI Concierge</span>
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        </button>
+      `;
+    }
+
+    renderChatWindow() {
+      const messageCount = this.messages.length;
+      return `
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-96 flex flex-col overflow-hidden chat-appear border-2 gold-border" style="height: 600px;">
+          <!-- Header -->
+          <div class="chat-gold-gradient text-black p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                <i class="fas fa-robot text-2xl gold-text"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg">${CHATBOT_CONFIG.botName}</h3>
+                <p class="text-xs flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  Online • AI-Powered
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              ${messageCount > 1 ? `
+                <button id="chat-clear-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Clear history">
+                  <i class="fas fa-trash text-lg"></i>
+                </button>
+              ` : ''}
+              <button id="chat-minimize-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Minimize">
+                <i class="fas fa-minus text-lg"></i>
+              </button>
+              <button id="chat-close-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Close">
+                <i class="fas fa-times text-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          ${!this.isLoading && this.messages.length === 1 ? `
+            <div class="p-3 bg-gray-800 border-b border-gray-700">
+              <p class="text-xs text-gray-400 mb-2 flex items-center gap-2">
+                <i class="fas fa-magic"></i> Quick questions:
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="What are your room rates?">
+                  💰 Room Rates
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="What amenities do you offer?">
+                  🏊 Amenities
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="How do I check availability?">
+                  📅 Availability
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="Tell me about your spa services">
+                  💆 Spa Services
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Messages -->
+          <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-black">
+            ${this.messages.map(msg => this.renderMessage(msg)).join('')}
+            ${this.isLoading ? this.renderLoader() : ''}
+          </div>
+
+          <!-- Input -->
+          <div class="border-t gold-border p-4 bg-gray-900">
+            <div class="flex gap-2 items-end">
+              <textarea 
+                id="chat-input" 
+                placeholder="Ask me anything about LuxuryStay..." 
+                class="flex-1 resize-none border gold-border rounded-xl px-4 py-3 bg-black text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm max-h-32"
+                rows="1"
+                ${this.isLoading ? 'disabled' : ''}
+              ></textarea>
+              <button 
+                id="chat-send-btn" 
+                class="chat-gold-gradient text-black rounded-xl p-3 transition-all hover:opacity-90 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                ${this.isLoading ? 'disabled' : ''}
+                title="Send message"
+              >
+                <i class="fas fa-paper-plane text-lg"></i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center flex items-center justify-center gap-2">
+              <i class="fas fa-shield-alt"></i>
+              Powered by AI • Available 24/7 • Press Enter to send
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    renderMessage(msg) {
+      const isUser = msg.type === 'user';
+      const isError = msg.type === 'error';
+      
+      return `
+        <div class="flex ${isUser ? 'justify-end' : 'justify-start'} fade-in">
+          ${!isUser ? `
+            <div class="w-8 h-8 rounded-full chat-gold-gradient flex items-center justify-center mr-2 flex-shrink-0">
+              <i class="fas fa-robot text-black"></i>
+            </div>
+          ` : ''}
+          <div class="max-w-[75%] rounded-2xl px-4 py-3 ${
+            isError ? 'bg-red-900 text-red-100 border border-red-700' :
+            isUser ? 'chat-gold-gradient text-black rounded-br-none font-medium' : 
+            'bg-gray-800 text-white rounded-bl-none border gold-border'
+          }">
+            <p class="text-sm whitespace-pre-wrap break-words leading-relaxed">${this.escapeHtml(msg.text)}</p>
+            <span class="text-xs mt-1 block ${
+              isError ? 'text-red-300' :
+              isUser ? 'text-black text-opacity-70' : 
+              'text-gray-400'
+            }">
+              ${msg.time}
+            </span>
+          </div>
+          ${isUser ? `
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-2 flex-shrink-0">
+              <i class="fas fa-user gold-text"></i>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    renderLoader() {
+      return `
+        <div class="flex justify-start fade-in">
+          <div class="w-8 h-8 rounded-full chat-gold-gradient flex items-center justify-center mr-2">
+            <i class="fas fa-robot text-black"></i>
+          </div>
+          <div class="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border gold-border">
+            <div class="flex gap-1 items-center">
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+              <span class="text-xs text-gray-400 ml-2 typing-indicator">AI is thinking...</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    attachEventListeners() {
+      const openBtn = document.getElementById('chat-open-btn');
+      const closeBtn = document.getElementById('chat-close-btn');
+      const minimizeBtn = document.getElementById('chat-minimize-btn');
+      const clearBtn = document.getElementById('chat-clear-btn');
+      const sendBtn = document.getElementById('chat-send-btn');
+      const input = document.getElementById('chat-input');
+      const quickActions = document.querySelectorAll('.quick-action');
+
+      if (openBtn) {
+        openBtn.addEventListener('click', () => {
+          this.isOpen = true;
+          this.render();
+          this.attachEventListeners();
+          setTimeout(() => this.scrollToBottom(), 100);
+        });
+      }
+
+      if (closeBtn || minimizeBtn) {
+        const closeHandler = () => {
+          this.isOpen = false;
+          this.render();
+          this.attachEventListeners();
+        };
+        closeBtn?.addEventListener('click', closeHandler);
+        minimizeBtn?.addEventListener('click', closeHandler);
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => this.clearHistory());
+      }
+
+      if (sendBtn) {
+        sendBtn.addEventListener('click', () => this.sendMessage());
+      }
+
+      if (input) {
+        input.addEventListener('input', (e) => {
+          e.target.style.height = 'auto';
+          e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
+        });
+
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+          }
+        });
+
+        input.focus();
+      }
+
+      quickActions.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const message = btn.getAttribute('data-message');
+          if (input) {
+            input.value = message;
+            this.sendMessage();
+          }
+        });
+      });
+    }
+
+    async sendMessage(retryMessage = null) {
+      const input = document.getElementById('chat-input');
+      const message = retryMessage || (input ? input.value.trim() : '');
+      
+      if (!message || this.isLoading) return;
+
+      if (!retryMessage) {
+        this.messages.push({
+          type: 'user',
+          text: message,
+          time: this.getTime()
+        });
+      }
+
+      if (input) input.value = '';
+      this.isLoading = true;
+      this.saveMessages();
+      this.render();
+      this.attachEventListeners();
+
+      try {
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (CHATBOT_CONFIG.bearerToken) {
+          headers['Authorization'] = CHATBOT_CONFIG.bearerToken;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CHATBOT_CONFIG.timeout);
+
+        const response = await fetch(CHATBOT_CONFIG.webhookUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            message: message,
+            timestamp: new Date().toISOString(),
+            sessionId: this.getSessionId(),
+            conversationHistory: this.messages.slice(-10),
+            hotelContext: {
+              name: 'LuxuryStay',
+              rooms: ['Deluxe Room', 'Executive Suite', 'Presidential Suite'],
+              prices: { 'Deluxe Room': 25000, 'Executive Suite': 42500, 'Presidential Suite': 75000 },
+              amenities: ['Infinity Pool', 'Fitness Center', 'Spa', 'Restaurant', 'WiFi', 'Valet Parking']
+            }
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const botResponse = data.response || data.message || data.output || data.text ||
+                           'I received your message but couldn\'t generate a proper response. Please try rephrasing your question.';
+        
+        this.messages.push({
+          type: 'bot',
+          text: botResponse,
+          time: this.getTime()
+        });
+
+        this.retryCount = 0;
+
+      } catch (error) {
+        console.error('Chatbot Error:', error);
+        
+        let errorMessage = '😕 Sorry, I\'m having trouble connecting. ';
+        
+        if (error.name === 'AbortError') {
+          errorMessage += 'The request timed out. Please try again.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage += 'Please check your internet connection.';
+        } else if (error.message.includes('401')) {
+          errorMessage += 'Authentication failed. Please contact support.';
+        } else {
+          errorMessage += 'Please try again in a moment.';
+        }
+
+        if (this.retryCount < CHATBOT_CONFIG.maxRetries) {
+          this.retryCount++;
+          errorMessage += ` (Retrying ${this.retryCount}/${CHATBOT_CONFIG.maxRetries}...)`;
+          
+          this.messages.push({
+            type: 'error',
+            text: errorMessage,
+            time: this.getTime()
+          });
+          
+          this.isLoading = false;
+          this.saveMessages();
+          this.render();
+          this.attachEventListeners();
+          this.scrollToBottom();
+
+          setTimeout(() => this.sendMessage(message), 2000);
+          return;
+        }
+
+        this.messages.push({
+          type: 'error',
+          text: errorMessage,
+          time: this.getTime()
+        });
+        
+        this.retryCount = 0;
+      } finally {
+        this.isLoading = false;
+        this.saveMessages();
+        this.render();
+        this.attachEventListeners();
+        this.scrollToBottom();
+      }
+    }
+
+    scrollToBottom() {
+      const messagesDiv = document.getElementById('chat-messages');
+      if (messagesDiv) {
+        setTimeout(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }, 100);
+      }
+    }
+  }
+
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyDN9-FOx1bMMTmGaHpsvt7MO0eZbJF0mVw",
     authDomain: "luxurystay-f4d48.firebaseapp.com",
@@ -460,7 +941,6 @@
     measurementId: "G-PSBW82LPQ8"
   };
 
-  // Initialize Firebase
   let database;
   try {
     if (typeof firebase !== 'undefined') {
@@ -474,12 +954,16 @@
     console.error("Firebase initialization error:", error);
   }
 
-  // Global variables
   let allBookings = [];
 
-  // Initialize the application
+  // ============================================
+  // INITIALIZE APPLICATION
+  // ============================================
   document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded, initializing application...");
+    
+    // Initialize chatbot
+    new LuxuryStayChatbot();
     
     // Set minimum dates for booking
     const today = new Date();
@@ -502,17 +986,14 @@
       checkOutInput.value = tomorrowFormatted;
     }
     
-    // Initialize booking modal
     updateBookingPrice();
-    
-    // Setup event listeners
     setupEventListeners();
-    
-    // Load bookings from Firebase
     loadBookings();
   });
 
-  // Load bookings from Firebase
+  // ============================================
+  // BOOKING SYSTEM FUNCTIONS
+  // ============================================
   function loadBookings() {
     if (!database) {
       console.log("Firebase not available, skipping bookings load");
@@ -549,7 +1030,6 @@
       }
       console.log(`Loaded ${allBookings.length} bookings from Firebase`);
       
-      // Refresh bookings panel if open
       if (document.getElementById('bookingsPanel').classList.contains('hidden') === false) {
         refreshBookings();
       }
@@ -558,9 +1038,7 @@
     });
   }
 
-  // Setup all event listeners
   function setupEventListeners() {
-    // Booking buttons
     document.getElementById('openBookingBtn').addEventListener('click', function() {
       openBookingModal();
     });
@@ -569,12 +1047,10 @@
       openBookingModal();
     });
 
-    // View bookings button
     document.getElementById('viewBookingsBtn').addEventListener('click', function() {
       openBookingsPanel();
     });
 
-    // Close modal on outside click
     document.getElementById('bookingModal').addEventListener('click', function(e) {
       if (e.target === this) {
         closeBookingModal();
@@ -587,7 +1063,6 @@
       }
     });
     
-    // Booking search and filter
     const searchBookings = document.getElementById('searchBookings');
     const filterStatus = document.getElementById('filterStatus');
     
@@ -604,7 +1079,6 @@
     }
   }
 
-  // Bookings Panel Functions
   function openBookingsPanel() {
     const panel = document.getElementById('bookingsPanel');
     panel.classList.remove('hidden');
@@ -630,14 +1104,12 @@
     
     noBookingsMessage.classList.add('hidden');
     
-    // Sort bookings by date (newest first)
     const sortedBookings = [...allBookings].sort((a, b) => {
       const dateA = new Date(a.bookingDate || a.checkInDate || 0);
       const dateB = new Date(b.bookingDate || b.checkInDate || 0);
       return dateB - dateA;
     });
     
-    // Generate table rows
     tableBody.innerHTML = sortedBookings.map(booking => {
       const guestName = booking.guestName || 'Unknown Guest';
       const guestEmail = booking.guestEmail || 'No email';
@@ -832,7 +1304,6 @@
     }
   }
 
-  // Booking Modal Functions
   function openBookingModal(roomType = null, price = null) {
     const modal = document.getElementById('bookingModal');
     modal.classList.remove('hidden');
@@ -842,7 +1313,6 @@
       updateBookingPrice();
     }
     
-    // Set proper dates
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -926,7 +1396,6 @@
     const errorElement = document.getElementById('bookingError');
     const submitBtn = document.getElementById('submitBookingBtn');
     
-    // Validation
     if (!guestName || !guestEmail || !guestPhone || !checkInDate || !checkOutDate) {
       errorElement.textContent = 'Please fill in all required fields.';
       errorElement.classList.remove('hidden');
@@ -939,7 +1408,6 @@
       return;
     }
     
-    // Calculate total amount
     const roomSelect = document.getElementById('roomType');
     const selectedOption = roomSelect.options[roomSelect.selectedIndex];
     const pricePerNight = parseInt(selectedOption.getAttribute('data-price'));
@@ -948,7 +1416,6 @@
     const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
     const totalAmount = pricePerNight * nights;
     
-    // Create booking object
     const booking = {
       id: Date.now().toString(),
       guestName: guestName,
@@ -968,11 +1435,9 @@
     
     console.log("Submitting booking:", booking);
     
-    // Show loading state
     submitBtn.innerHTML = '<div class="loading"></div> Processing...';
     submitBtn.disabled = true;
     
-    // Save to Firebase if available
     if (database) {
       database.ref('bookings/' + booking.id).set(booking)
         .then(() => {
@@ -981,21 +1446,19 @@
         })
         .catch((error) => {
           console.error('Error saving booking to Firebase:', error);
-          // Still show success message even if Firebase fails
           showSuccessMessage(guestName, roomType, nights, totalAmount);
         })
         .finally(() => {
           resetButtonState(submitBtn);
         });
     } else {
-      // Firebase not available, just show success message
       showSuccessMessage(guestName, roomType, nights, totalAmount);
       resetButtonState(submitBtn);
     }
   }
 
   function showSuccessMessage(guestName, roomType, nights, totalAmount) {
-    alert(`Booking confirmed!\n\nThank you ${guestName}! Your ${roomType} booking for ${nights} nights has been confirmed.\nTotal: LKR ${totalAmount.toLocaleString()}`);
+    alert(`✅ Booking Confirmed!\n\nThank you ${guestName}!\n\nYour ${roomType} booking for ${nights} nights has been confirmed.\n\nTotal: LKR ${totalAmount.toLocaleString()}\n\nWe look forward to welcoming you to LuxuryStay!`);
     closeBookingModal();
     resetBookingForm();
   }
@@ -1010,7 +1473,6 @@
     document.getElementById('guestEmail').value = '';
     document.getElementById('guestPhone').value = '';
     
-    // Reset dates to today and tomorrow
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1024,7 +1486,9 @@
     updateBookingPrice();
   }
 
-  // Utility Functions
+  // ============================================
+  // UTILITY FUNCTIONS
+  // ============================================
   function formatDate(dateString) {
     if (!dateString) return 'N/A';
     try {
