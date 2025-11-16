@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LuxuryStay — Premium Hotel Management</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    .gold-text { color: #D4AF37; }
+    .gold-bg { background-color: #D4AF37; }
+    .gold-border { border-color: #D4AF37; }
+    .ribbon {
+      position: absolute;
+      top: 10px;
+      right: -10px;
+      background: #D4AF37;
+      padding: 6px 20px;
+      transform: rotate(45deg);
+      font-weight: bold;
+      color: black;
+      font-size: 14px;
+    }
+    .booking-modal {
+      transition: all 0.3s ease-in-out;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .room-card {
+      transition: all 0.3s ease;
+    }
+    .room-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15);
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: #D4AF37;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    /* Fix for date input in dark mode */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-black text-white">
+
+<!-- NAVBAR -->
+<nav class="flex items-center justify-between p-6 bg-black border-b border-gray-800 sticky top-0 z-40">
+  <h1 class="text-2xl font-bold gold-text flex items-center">
+    <i class="fas fa-crown mr-2"></i>LuxuryStay
+  </h1>
+  <div class="flex items-center gap-3">
+    <button id="openBookingBtn" class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+      <i class="fas fa-calendar-plus mr-2"></i>Book Now
+    </button>
+    <button id="viewBookingsBtn" class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+      <i class="fas fa-list mr-2"></i>View Bookings
+    </button>
+    <a href="https://vimukthi1239.github.io/hotel-analytics-dashboard/" target="_blank" class="px-4 py-2 gold-bg text-black rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center">
+      <i class="fas fa-user-shield mr-2"></i>Admin
+    </a>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="relative h-[80vh] bg-cover bg-center flex items-center justify-center overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-r from-black to-transparent z-10"></div>
+  <div class="absolute inset-0 bg-black opacity-50 z-0"></div>
+  <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+       class="absolute inset-0 w-full h-full object-cover z-0" alt="Luxury Hotel">
+  <div class="relative z-20 text-center text-white px-4 max-w-4xl fade-in">
+    <h1 class="text-5xl md:text-7xl font-bold mb-6 gold-text">LuxuryStay</h1>
+    <p class="text-xl md:text-2xl mb-8">Experience Unparalleled Luxury in the Heart of the City</p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button onclick="scrollToRooms()" class="px-8 py-3 gold-bg text-black rounded-lg font-bold text-lg hover:opacity-90 transition-opacity">
+        <i class="fas fa-eye mr-2"></i>View Rooms
+      </button>
+      <button id="openBookingBtn2" class="px-8 py-3 bg-white text-black rounded-lg font-bold text-lg hover:bg-gray-200 transition-colors">
+        <i class="fas fa-concierge-bell mr-2"></i>Book Your Stay
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="py-16 bg-gray-950">
+  <div class="container mx-auto px-4">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Why Choose LuxuryStay?</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-spa text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">Luxury Spa</h3>
+        <p class="text-gray-400">Relax and rejuvenate with our world-class spa treatments and wellness services.</p>
+      </div>
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-utensils text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">Gourmet Dining</h3>
+        <p class="text-gray-400">Experience culinary excellence with our award-winning restaurants and chefs.</p>
+      </div>
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-concierge-bell text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">24/7 Concierge</h3>
+        <p class="text-gray-400">Our dedicated staff is available around the clock to cater to your every need.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROOMS SECTION -->
+<section id="rooms" class="py-16 px-4">
+  <div class="container mx-auto">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Our Premium Rooms & Suites</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Room 1 -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">LKR 25,000</span>
+        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Deluxe Room">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Deluxe Room</h3>
+          <p class="text-gray-400 mb-4">Luxury bedding, ocean view, and complimentary breakfast.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Deluxe Room', 25000)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center">
+              <i class="fas fa-calendar-check mr-2"></i>Book Now
+            </button>
+            <button onclick="showDetails('Deluxe Room','• King size bed\n• Ocean view balcony\n• Minibar\n• Free Wi-Fi\n• Complimentary breakfast\n• 55\" Smart TV')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center">
+              <i class="fas fa-info-circle mr-2"></i>Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room 2 -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">LKR 42,500</span>
+        <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Executive Suite">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Executive Suite</h3>
+          <p class="text-gray-400 mb-4">Private balcony, king-size bed, 24/7 room service.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Executive Suite', 42500)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center">
+              <i class="fas fa-calendar-check mr-2"></i>Book Now
+            </button>
+            <button onclick="showDetails('Executive Suite','• Private lounge area\n• Panoramic city views\n• Personal concierge\n• Luxury bathroom\n• 24/7 room service\n• Separate living area')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center">
+              <i class="fas fa-info-circle mr-2"></i>Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room 3 -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">LKR 75,000</span>
+        <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Presidential Suite">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Presidential Suite</h3>
+          <p class="text-gray-400 mb-4">Exclusive lounge, premium bar, luxury bathroom.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Presidential Suite', 75000)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center">
+              <i class="fas fa-calendar-check mr-2"></i>Book Now
+            </button>
+            <button onclick="showDetails('Presidential Suite','• Private jacuzzi\n• Dedicated butler service\n• Oceanfront balcony\n• Premium bar\n• Exclusive lounge\n• Private dining area')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center">
+              <i class="fas fa-info-circle mr-2"></i>Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AMENITIES SECTION -->
+<section class="py-16 bg-gray-950">
+  <div class="container mx-auto px-4">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Hotel Amenities</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-swimming-pool text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Infinity Pool</h3>
+        <p class="text-gray-400">Stunning rooftop pool with panoramic city views</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-dumbbell text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Fitness Center</h3>
+        <p class="text-gray-400">State-of-the-art gym with personal trainers</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-wifi text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">High-Speed WiFi</h3>
+        <p class="text-gray-400">Complimentary high-speed internet throughout</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-parking text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Valet Parking</h3>
+        <p class="text-gray-400">Complimentary valet parking for all guests</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 booking-modal">
+  <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-2xl border-2 gold-border max-h-[90vh] overflow-y-auto fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl gold-text font-bold flex items-center">
+        <i class="fas fa-calendar-plus mr-2"></i>Book Your Stay
+      </h3>
+      <button onclick="closeBookingModal()" class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Full Name *</label>
+        <input type="text" id="guestName" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter your full name">
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Email Address *</label>
+        <input type="email" id="guestEmail" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter your email">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Phone Number *</label>
+        <input type="tel" id="guestPhone" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter your phone">
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Room Type *</label>
+        <select id="roomType" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="updateBookingPrice()">
+          <option value="Deluxe Room" data-price="25000">Deluxe Room - LKR 25,000/night</option>
+          <option value="Executive Suite" data-price="42500">Executive Suite - LKR 42,500/night</option>
+          <option value="Presidential Suite" data-price="75000">Presidential Suite - LKR 75,000/night</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Check-in Date *</label>
+        <input type="date" id="checkInDate" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Check-out Date *</label>
+        <input type="date" id="checkOutDate" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Number of Guests *</label>
+        <select id="guestCount" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+          <option value="1">1 Guest</option>
+          <option value="2" selected>2 Guests</option>
+          <option value="3">3 Guests</option>
+          <option value="4">4 Guests</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Special Requests</label>
+        <textarea id="specialRequests" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Any special requirements..." rows="3"></textarea>
+      </div>
+    </div>
+
+    <!-- Price Summary -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-6">
+      <h4 class="text-lg gold-text font-bold mb-4 flex items-center">
+        <i class="fas fa-receipt mr-2"></i>Booking Summary
+      </h4>
+      <div class="space-y-2">
+        <div class="flex justify-between">
+          <span>Room Price per night:</span>
+          <span id="roomPrice" class="gold-text">LKR 25,000</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Number of Nights:</span>
+          <span id="nightsCount">0</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Number of Guests:</span>
+          <span id="guestsCount">2</span>
+        </div>
+        <div class="border-t border-gray-600 pt-2 mt-2">
+          <div class="flex justify-between text-lg font-bold">
+            <span>Total Amount:</span>
+            <span id="totalAmount" class="gold-text">LKR 0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <button onclick="submitBooking()" id="submitBookingBtn" class="flex-1 py-4 gold-bg text-black rounded-lg font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center">
+        <i class="fas fa-check-circle mr-2"></i>Confirm Booking
+      </button>
+      <button onclick="closeBookingModal()" class="flex-1 py-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+        Cancel
+      </button>
+    </div>
+
+    <p id="bookingError" class="text-red-500 text-center mt-4 hidden"></p>
+  </div>
+</div>
+
+<!-- BOOKINGS PANEL -->
+<div id="bookingsPanel" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 booking-modal">
+  <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-6xl border-2 gold-border max-h-[90vh] overflow-y-auto fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl gold-text font-bold flex items-center">
+        <i class="fas fa-list mr-2"></i>All Bookings
+      </h3>
+      <button onclick="closeBookingsPanel()" class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Bookings Stats -->
+    <div class="grid md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold gold-text text-center" id="totalBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Total Bookings</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-green-400 text-center" id="confirmedBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Confirmed</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-blue-400 text-center" id="pendingBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Pending</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-red-400 text-center" id="cancelledBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Cancelled</div>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-6">
+      <div class="flex gap-4">
+        <input type="text" id="searchBookings" placeholder="Search by name or email..." class="flex-1 p-3 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none">
+        <select id="filterStatus" class="p-3 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none">
+          <option value="all">All Status</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="pending">Pending</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <button onclick="refreshBookings()" class="px-4 py-2 gold-bg text-black rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center">
+          <i class="fas fa-sync-alt mr-2"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="bg-gray-800 rounded-lg border gold-border overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-750">
+            <tr>
+              <th class="p-4 text-left text-gray-400">Guest</th>
+              <th class="p-4 text-left text-gray-400">Room Type</th>
+              <th class="p-4 text-left text-gray-400">Check-in</th>
+              <th class="p-4 text-left text-gray-400">Check-out</th>
+              <th class="p-4 text-left text-gray-400">Amount</th>
+              <th class="p-4 text-left text-gray-400">Status</th>
+              <th class="p-4 text-left text-gray-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody">
+            <!-- Bookings will be populated here -->
+          </tbody>
+        </table>
+      </div>
+      <div id="noBookingsMessage" class="text-center py-8 text-gray-500 hidden">
+        <i class="fas fa-calendar-times text-4xl mb-4"></i>
+        <p>No bookings found</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-gray-950 py-12 border-t border-gray-800">
+  <div class="container mx-auto px-4">
+    <div class="grid md:grid-cols-4 gap-8">
+      <div>
+        <h3 class="text-xl font-bold gold-text mb-4">LuxuryStay</h3>
+        <p class="text-gray-400">Experience unparalleled luxury and exceptional service at our premium hotel.</p>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Contact Info</h4>
+        <p class="text-gray-400 mb-2"><i class="fas fa-map-marker-alt gold-text mr-2"></i> 123 Luxury Avenue, Colombo</p>
+        <p class="text-gray-400 mb-2"><i class="fas fa-phone gold-text mr-2"></i> 045 2050973</p>
+        <p class="text-gray-400"><i class="fas fa-envelope gold-text mr-2"></i> info@luxurystay.com</p>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Quick Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
+          <li><a href="#rooms" class="text-gray-400 hover:text-white transition-colors">Rooms & Suites</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Amenities</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Connect With Us</h4>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+      <p>&copy; 2024 LuxuryStay. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDN9-FOx1bMMTmGaHpsvt7MO0eZbJF0mVw",
+    authDomain: "luxurystay-f4d48.firebaseapp.com",
+    databaseURL: "https://luxurystay-f4d48-default-rtdb.firebaseio.com",
+    projectId: "luxurystay-f4d48",
+    storageBucket: "luxurystay-f4d48.firebasestorage.app",
+    messagingSenderId: "957241383544",
+    appId: "1:957241383544:web:a8a95c3e528717d6a92b8d",
+    measurementId: "G-PSBW82LPQ8"
+  };
+
+  // Initialize Firebase
+  let database;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      database = firebase.database();
+      console.log("Firebase initialized successfully");
+    }
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
+  }
+
+  // Global variables
+  let allBookings = [];
+
+  // Initialize the application
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded, initializing application...");
+    
+    // Set minimum dates for booking
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayFormatted = today.toISOString().split('T')[0];
+    const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    
+    const checkInInput = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+    
+    if (checkInInput) {
+      checkInInput.setAttribute('min', todayFormatted);
+      checkInInput.value = todayFormatted;
+    }
+    
+    if (checkOutInput) {
+      checkOutInput.setAttribute('min', tomorrowFormatted);
+      checkOutInput.value = tomorrowFormatted;
+    }
+    
+    // Initialize booking modal
+    updateBookingPrice();
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Load bookings from Firebase
+    loadBookings();
+  });
+
+  // Load bookings from Firebase
+  function loadBookings() {
+    if (!database) {
+      console.log("Firebase not available, skipping bookings load");
+      return;
+    }
+
+    console.log("Loading bookings from Firebase...");
+    
+    const bookingsRef = database.ref('bookings');
+    bookingsRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        allBookings = Object.keys(data).map(key => {
+          const booking = data[key];
+          return {
+            id: key,
+            guestName: booking.guestName || 'Unknown Guest',
+            guestEmail: booking.guestEmail || 'No email',
+            guestPhone: booking.guestPhone || 'No phone',
+            roomType: booking.roomType || 'Unknown Room',
+            checkInDate: booking.checkInDate || '',
+            checkOutDate: booking.checkOutDate || '',
+            guestCount: booking.guestCount || 1,
+            specialRequests: booking.specialRequests || 'None',
+            totalAmount: booking.totalAmount || 0,
+            status: booking.status || 'confirmed',
+            bookingDate: booking.bookingDate || new Date().toISOString(),
+            nights: booking.nights || 1,
+            pricePerNight: booking.pricePerNight || 0
+          };
+        });
+      } else {
+        allBookings = [];
+      }
+      console.log(`Loaded ${allBookings.length} bookings from Firebase`);
+      
+      // Refresh bookings panel if open
+      if (document.getElementById('bookingsPanel').classList.contains('hidden') === false) {
+        refreshBookings();
+      }
+    }, (error) => {
+      console.error('Error loading bookings:', error);
+    });
+  }
+
+  // Setup all event listeners
+  function setupEventListeners() {
+    // Booking buttons
+    document.getElementById('openBookingBtn').addEventListener('click', function() {
+      openBookingModal();
+    });
+    
+    document.getElementById('openBookingBtn2').addEventListener('click', function() {
+      openBookingModal();
+    });
+
+    // View bookings button
+    document.getElementById('viewBookingsBtn').addEventListener('click', function() {
+      openBookingsPanel();
+    });
+
+    // Close modal on outside click
+    document.getElementById('bookingModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeBookingModal();
+      }
+    });
+
+    document.getElementById('bookingsPanel').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeBookingsPanel();
+      }
+    });
+    
+    // Booking search and filter
+    const searchBookings = document.getElementById('searchBookings');
+    const filterStatus = document.getElementById('filterStatus');
+    
+    if (searchBookings) {
+      searchBookings.addEventListener('input', function() {
+        filterBookings();
+      });
+    }
+    
+    if (filterStatus) {
+      filterStatus.addEventListener('change', function() {
+        filterBookings();
+      });
+    }
+  }
+
+  // Bookings Panel Functions
+  function openBookingsPanel() {
+    const panel = document.getElementById('bookingsPanel');
+    panel.classList.remove('hidden');
+    refreshBookings();
+  }
+
+  function closeBookingsPanel() {
+    document.getElementById('bookingsPanel').classList.add('hidden');
+  }
+
+  function refreshBookings() {
+    const tableBody = document.getElementById('bookingsTableBody');
+    const noBookingsMessage = document.getElementById('noBookingsMessage');
+    
+    if (!tableBody) return;
+    
+    if (allBookings.length === 0) {
+      tableBody.innerHTML = '';
+      noBookingsMessage.classList.remove('hidden');
+      updateBookingStats();
+      return;
+    }
+    
+    noBookingsMessage.classList.add('hidden');
+    
+    // Sort bookings by date (newest first)
+    const sortedBookings = [...allBookings].sort((a, b) => {
+      const dateA = new Date(a.bookingDate || a.checkInDate || 0);
+      const dateB = new Date(b.bookingDate || b.checkInDate || 0);
+      return dateB - dateA;
+    });
+    
+    // Generate table rows
+    tableBody.innerHTML = sortedBookings.map(booking => {
+      const guestName = booking.guestName || 'Unknown Guest';
+      const guestEmail = booking.guestEmail || 'No email';
+      const roomType = booking.roomType || 'Unknown Room';
+      const checkInDate = booking.checkInDate || 'Not set';
+      const checkOutDate = booking.checkOutDate || 'Not set';
+      const totalAmount = booking.totalAmount || 0;
+      const status = booking.status || 'confirmed';
+      const guestCount = booking.guestCount || 1;
+      const nights = booking.nights || 1;
+      
+      return `
+        <tr class="border-b border-gray-700 hover:bg-gray-750">
+          <td class="p-4">
+            <div class="font-semibold">${escapeHtml(guestName)}</div>
+            <div class="text-sm text-gray-400">${escapeHtml(guestEmail)}</div>
+            <div class="text-xs text-gray-500">Phone: ${escapeHtml(booking.guestPhone || 'N/A')}</div>
+          </td>
+          <td class="p-4">
+            <div class="font-medium">${escapeHtml(roomType)}</div>
+            <div class="text-sm text-gray-400">${nights} night(s) • ${guestCount} guest(s)</div>
+          </td>
+          <td class="p-4">
+            <div class="font-medium">${formatDate(checkInDate)}</div>
+          </td>
+          <td class="p-4">
+            <div class="font-medium">${formatDate(checkOutDate)}</div>
+          </td>
+          <td class="p-4">
+            <div class="gold-text font-semibold">LKR ${totalAmount.toLocaleString()}</div>
+            <div class="text-sm text-gray-400">LKR ${(booking.pricePerNight || Math.round(totalAmount / nights)).toLocaleString()}/night</div>
+          </td>
+          <td class="p-4">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(status)}">
+              ${status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          </td>
+          <td class="p-4">
+            <div class="flex gap-2">
+              <button onclick="viewBooking('${booking.id}')" class="px-3 py-1 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors flex items-center">
+                <i class="fas fa-eye mr-1"></i> View
+              </button>
+              <button onclick="editBookingStatus('${booking.id}')" class="px-3 py-1 bg-yellow-600 rounded text-sm hover:bg-yellow-700 transition-colors flex items-center">
+                <i class="fas fa-edit mr-1"></i> Edit
+              </button>
+              <button onclick="deleteBooking('${booking.id}')" class="px-3 py-1 bg-red-600 rounded text-sm hover:bg-red-700 transition-colors flex items-center">
+                <i class="fas fa-trash mr-1"></i> Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+    updateBookingStats();
+    filterBookings();
+  }
+
+  function filterBookings() {
+    const searchTerm = document.getElementById('searchBookings')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+    const rows = document.querySelectorAll('#bookingsTableBody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+      const guestName = row.cells[0].textContent.toLowerCase();
+      const roomType = row.cells[1].textContent.toLowerCase();
+      const status = row.cells[5].textContent.toLowerCase().trim();
+      
+      const matchesSearch = guestName.includes(searchTerm) || roomType.includes(searchTerm);
+      const matchesStatus = statusFilter === 'all' || status === statusFilter;
+      
+      if (matchesSearch && matchesStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    const noBookingsMessage = document.getElementById('noBookingsMessage');
+    if (visibleCount === 0 && allBookings.length > 0) {
+      noBookingsMessage?.classList.remove('hidden');
+    } else {
+      noBookingsMessage?.classList.add('hidden');
+    }
+  }
+
+  function updateBookingStats() {
+    const total = allBookings.length;
+    const confirmed = allBookings.filter(b => (b.status || 'confirmed') === 'confirmed').length;
+    const pending = allBookings.filter(b => (b.status || 'confirmed') === 'pending').length;
+    const cancelled = allBookings.filter(b => (b.status || 'confirmed') === 'cancelled').length;
+    
+    document.getElementById('totalBookingsCount').textContent = total;
+    document.getElementById('confirmedBookingsCount').textContent = confirmed;
+    document.getElementById('pendingBookingsCount').textContent = pending;
+    document.getElementById('cancelledBookingsCount').textContent = cancelled;
+  }
+
+  function getStatusClass(status) {
+    const normalizedStatus = (status || 'confirmed').toLowerCase();
+    switch(normalizedStatus) {
+      case 'confirmed': return 'bg-green-600 text-white';
+      case 'pending': return 'bg-yellow-600 text-white';
+      case 'cancelled': return 'bg-red-600 text-white';
+      default: return 'bg-gray-600 text-white';
+    }
+  }
+
+  function viewBooking(bookingId) {
+    const booking = allBookings.find(b => b.id === bookingId);
+    if (booking) {
+      const guestName = booking.guestName || 'Unknown Guest';
+      const guestEmail = booking.guestEmail || 'No email provided';
+      const guestPhone = booking.guestPhone || 'No phone provided';
+      const roomType = booking.roomType || 'Unknown Room';
+      const checkInDate = booking.checkInDate || 'Not set';
+      const checkOutDate = booking.checkOutDate || 'Not set';
+      const guestCount = booking.guestCount || 1;
+      const nights = booking.nights || 1;
+      const totalAmount = booking.totalAmount || 0;
+      const status = booking.status || 'confirmed';
+      const specialRequests = booking.specialRequests || 'None';
+      const bookingDate = booking.bookingDate ? formatDate(booking.bookingDate) : 'Unknown';
+      
+      alert(`Booking Details:\n\n` +
+        `Name: ${guestName}\n` +
+        `Email: ${guestEmail}\n` +
+        `Phone: ${guestPhone}\n` +
+        `Room: ${roomType}\n` +
+        `Check-in: ${formatDate(checkInDate)}\n` +
+        `Check-out: ${formatDate(checkOutDate)}\n` +
+        `Guests: ${guestCount}\n` +
+        `Nights: ${nights}\n` +
+        `Total: LKR ${totalAmount.toLocaleString()}\n` +
+        `Status: ${status}\n` +
+        `Booking Date: ${bookingDate}\n` +
+        `Special Requests: ${specialRequests}`);
+    } else {
+      alert('Booking not found!');
+    }
+  }
+
+  function editBookingStatus(bookingId) {
+    const booking = allBookings.find(b => b.id === bookingId);
+    if (booking) {
+      const currentStatus = booking.status || 'confirmed';
+      const newStatus = prompt(`Change status for ${booking.guestName || 'Unknown Guest'}'s booking:\n\nCurrent status: ${currentStatus}\n\nEnter new status (confirmed, pending, or cancelled):`, currentStatus);
+      
+      if (newStatus && ['confirmed', 'pending', 'cancelled'].includes(newStatus.toLowerCase())) {
+        if (database) {
+          database.ref('bookings/' + bookingId).update({
+            status: newStatus.toLowerCase()
+          }).then(() => {
+            console.log(`Booking ${bookingId} status updated to ${newStatus}`);
+          }).catch(error => {
+            console.error('Error updating booking status:', error);
+            alert('Error updating booking status');
+          });
+        } else {
+          alert('Firebase not available. Status change not saved.');
+        }
+      } else if (newStatus) {
+        alert('Invalid status! Please enter: confirmed, pending, or cancelled');
+      }
+    } else {
+      alert('Booking not found!');
+    }
+  }
+
+  function deleteBooking(bookingId) {
+    const booking = allBookings.find(b => b.id === bookingId);
+    if (booking) {
+      const guestName = booking.guestName || 'Unknown Guest';
+      if (confirm(`Are you sure you want to delete the booking for ${guestName}?\n\nThis action cannot be undone.`)) {
+        if (database) {
+          database.ref('bookings/' + bookingId).remove()
+            .then(() => {
+              console.log(`Booking ${bookingId} deleted`);
+            })
+            .catch(error => {
+              console.error('Error deleting booking:', error);
+              alert('Error deleting booking');
+            });
+        } else {
+          alert('Firebase not available. Delete operation not performed.');
+        }
+      }
+    } else {
+      alert('Booking not found!');
+    }
+  }
+
+  // Booking Modal Functions
+  function openBookingModal(roomType = null, price = null) {
+    const modal = document.getElementById('bookingModal');
+    modal.classList.remove('hidden');
+    
+    if (roomType && price) {
+      document.getElementById('roomType').value = roomType;
+      updateBookingPrice();
+    }
+    
+    // Set proper dates
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayFormatted = today.toISOString().split('T')[0];
+    const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    
+    const checkInInput = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+    
+    if (checkInInput) {
+      checkInInput.min = todayFormatted;
+      checkInInput.value = todayFormatted;
+    }
+    
+    if (checkOutInput) {
+      checkOutInput.min = tomorrowFormatted;
+      checkOutInput.value = tomorrowFormatted;
+    }
+    
+    calculateTotal();
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookingModal').classList.add('hidden');
+    const errorElement = document.getElementById('bookingError');
+    if (errorElement) {
+      errorElement.classList.add('hidden');
+    }
+  }
+
+  function updateBookingPrice() {
+    const roomSelect = document.getElementById('roomType');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const price = selectedOption.getAttribute('data-price');
+    document.getElementById('roomPrice').textContent = `LKR ${parseInt(price).toLocaleString()}`;
+    calculateTotal();
+  }
+
+  function calculateTotal() {
+    const roomSelect = document.getElementById('roomType');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const pricePerNight = parseInt(selectedOption.getAttribute('data-price'));
+    
+    const checkInInput = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+    
+    if (!checkInInput || !checkOutInput) {
+      console.error('Date inputs not found');
+      return;
+    }
+    
+    const checkIn = new Date(checkInInput.value);
+    const checkOut = new Date(checkOutInput.value);
+    
+    if (checkIn && checkOut && checkOut > checkIn) {
+      const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+      const guestCount = parseInt(document.getElementById('guestCount').value);
+      
+      document.getElementById('nightsCount').textContent = nights;
+      document.getElementById('guestsCount').textContent = guestCount;
+      
+      const totalAmount = pricePerNight * nights;
+      document.getElementById('totalAmount').textContent = `LKR ${totalAmount.toLocaleString()}`;
+    } else {
+      document.getElementById('nightsCount').textContent = '0';
+      document.getElementById('totalAmount').textContent = 'LKR 0';
+    }
+  }
+
+  function submitBooking() {
+    const guestName = document.getElementById('guestName').value.trim();
+    const guestEmail = document.getElementById('guestEmail').value.trim();
+    const guestPhone = document.getElementById('guestPhone').value.trim();
+    const roomType = document.getElementById('roomType').value;
+    const checkInDate = document.getElementById('checkInDate').value;
+    const checkOutDate = document.getElementById('checkOutDate').value;
+    const guestCount = document.getElementById('guestCount').value;
+    const specialRequests = document.getElementById('specialRequests').value.trim();
+    
+    const errorElement = document.getElementById('bookingError');
+    const submitBtn = document.getElementById('submitBookingBtn');
+    
+    // Validation
+    if (!guestName || !guestEmail || !guestPhone || !checkInDate || !checkOutDate) {
+      errorElement.textContent = 'Please fill in all required fields.';
+      errorElement.classList.remove('hidden');
+      return;
+    }
+    
+    if (new Date(checkOutDate) <= new Date(checkInDate)) {
+      errorElement.textContent = 'Check-out date must be after check-in date.';
+      errorElement.classList.remove('hidden');
+      return;
+    }
+    
+    // Calculate total amount
+    const roomSelect = document.getElementById('roomType');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const pricePerNight = parseInt(selectedOption.getAttribute('data-price'));
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const totalAmount = pricePerNight * nights;
+    
+    // Create booking object
+    const booking = {
+      id: Date.now().toString(),
+      guestName: guestName,
+      guestEmail: guestEmail,
+      guestPhone: guestPhone,
+      roomType: roomType,
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      guestCount: parseInt(guestCount),
+      specialRequests: specialRequests,
+      totalAmount: totalAmount,
+      status: 'confirmed',
+      bookingDate: new Date().toISOString(),
+      nights: nights,
+      pricePerNight: pricePerNight
+    };
+    
+    console.log("Submitting booking:", booking);
+    
+    // Show loading state
+    submitBtn.innerHTML = '<div class="loading"></div> Processing...';
+    submitBtn.disabled = true;
+    
+    // Save to Firebase if available
+    if (database) {
+      database.ref('bookings/' + booking.id).set(booking)
+        .then(() => {
+          console.log("Booking successfully saved to Firebase");
+          showSuccessMessage(guestName, roomType, nights, totalAmount);
+        })
+        .catch((error) => {
+          console.error('Error saving booking to Firebase:', error);
+          // Still show success message even if Firebase fails
+          showSuccessMessage(guestName, roomType, nights, totalAmount);
+        })
+        .finally(() => {
+          resetButtonState(submitBtn);
+        });
+    } else {
+      // Firebase not available, just show success message
+      showSuccessMessage(guestName, roomType, nights, totalAmount);
+      resetButtonState(submitBtn);
+    }
+  }
+
+  function showSuccessMessage(guestName, roomType, nights, totalAmount) {
+    alert(`Booking confirmed!\n\nThank you ${guestName}! Your ${roomType} booking for ${nights} nights has been confirmed.\nTotal: LKR ${totalAmount.toLocaleString()}`);
+    closeBookingModal();
+    resetBookingForm();
+  }
+
+  function resetButtonState(submitBtn) {
+    submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirm Booking';
+    submitBtn.disabled = false;
+  }
+
+  function resetBookingForm() {
+    document.getElementById('guestName').value = '';
+    document.getElementById('guestEmail').value = '';
+    document.getElementById('guestPhone').value = '';
+    
+    // Reset dates to today and tomorrow
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    document.getElementById('checkInDate').value = today.toISOString().split('T')[0];
+    document.getElementById('checkOutDate').value = tomorrow.toISOString().split('T')[0];
+    
+    document.getElementById('guestCount').value = '2';
+    document.getElementById('specialRequests').value = '';
+    document.getElementById('roomType').selectedIndex = 0;
+    updateBookingPrice();
+  }
+
+  // Utility Functions
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return 'Invalid Date';
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showDetails(title, description) {
+    alert(`${title}\n\n${description}`);
+  }
+
+  function scrollToRooms() {
+    document.getElementById('rooms').scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
