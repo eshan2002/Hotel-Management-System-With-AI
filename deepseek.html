@@ -489,7 +489,7 @@
   // CHATBOT CONFIGURATION
   // ============================================
   const CHATBOT_CONFIG = {
-    webhookUrl: 'https://malshansenevirathna.app.n8n.cloud/webhook/hotel-chatbot',
+    webhookUrl: 'https://YOUR-INSTANCE.app.n8n.cloud/webhook/hotel-chatbot',
     bearerToken: 'Bearer sk_hotel_secret_12345',
     botName: 'LuxuryStay AI Concierge',
     welcomeMessage: '✨ Welcome to LuxuryStay! I\'m your AI concierge. I can help you with:\n\n🏨 Room information & availability\n📅 Booking assistance\n🍽️ Restaurant recommendations\n🏊 Amenities & services\n📍 Local attractions\n\nHow may I assist you today?',
@@ -840,8 +840,8 @@
             conversationHistory: this.messages.slice(-10),
             hotelContext: {
               name: 'LuxuryStay',
-              rooms: ['Deluxe Room', 'Suite', 'Standard', 'Presidential Suite'],
-              prices: { 'Deluxe Room': $100/night , 'Suite': $350/night, 'Standard': $100/night, 'Presidential Suite': $500/night
+              rooms: ['Deluxe Room', 'Executive Suite', 'Presidential Suite'],
+              prices: { 'Deluxe Room': 25000, 'Executive Suite': 42500, 'Presidential Suite': 75000 },
               amenities: ['Infinity Pool', 'Fitness Center', 'Spa', 'Restaurant', 'WiFi', 'Valet Parking']
             }
           }),
@@ -1522,6 +1522,3 @@
 </script>
 </body>
 </html>
-
-
-
