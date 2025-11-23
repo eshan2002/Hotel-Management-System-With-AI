@@ -1,0 +1,685 @@
+{
+  "name": "Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=```\nAnalyze this hotel booking data and provide predictions:\n\nCurrent Statistics:\n- Total Revenue: ${{$json.totalRevenue}}\n- Total Guests: {{$json.totalGuests}}\n- Total Bookings: {{$json.totalBookings}}\n- Average Satisfaction: {{$json.avgSatisfaction}}/5\n- Average Nights Stay: {{$json.avgNightsStay}}\n- Room Types: {{JSON.stringify($json.roomTypes)}}\n\nBased on this data, provide:\n1. Next year, month & 7 days revenue prediction with growth rate\n2. Expected number of guests next year, month & 7 days\n3. Top 3 actionable insights for improvement\n4. Seasonal trends and recommendations\n\nFormat response as JSON with keys: nextYearRevenue, nextYearGuests, growthRate, insights, recommendations",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        240
+      ],
+      "id": "ddc34b38-b764-4a00-8943-0820f33da6a4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        944,
+        448
+      ],
+      "id": "3e8a3d3e-d4fd-4366-93a3-05540a1276ca",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "XHMf2n8lJpDsKYDC",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 60
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        128
+      ],
+      "id": "616ab99b-e087-4f0e-a077-38a61f380bbe",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://luxurystay-f4d48-default-rtdb.firebaseio.com/bookings.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        128
+      ],
+      "id": "8ae790df-201e-4e0e-8619-3ac20e82b2c8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const statisticsItem = $('Calculate Statistics').first().json;\nconst aiResponse = $input.first().json.output;\n\n// Parse AI response - extract JSON from markdown code blocks if present\nlet aiPredictions = {};\ntry {\n  // Remove markdown code blocks (```json and ```)\n  let cleanedResponse = aiResponse.trim();\n  \n  // Check if response contains markdown code blocks\n  const jsonMatch = cleanedResponse.match(/```(?:json)?\\s*\\n([\\s\\S]*?)\\n```/);\n  if (jsonMatch) {\n    // Extract JSON from code block\n    cleanedResponse = jsonMatch[1].trim();\n  }\n  \n  // Parse the cleaned JSON\n  aiPredictions = JSON.parse(cleanedResponse);\n  \n} catch (e) {\n  console.error('Failed to parse AI response:', e);\n  console.error('Raw AI response:', aiResponse);\n  // Fallback if AI doesn't return valid JSON\n  aiPredictions = {\n    nextYearRevenue: statisticsItem.totalRevenue * 1.15,\n    nextMonthRevenue: Math.round((statisticsItem.totalRevenue / 12) * 1.15),\n    next7DaysRevenue: Math.round((statisticsItem.totalRevenue / 52) * 1.15),\n    nextYearGuests: Math.round(statisticsItem.totalGuests * 1.15),\n    nextMonthGuests: Math.round((statisticsItem.totalGuests / 12) * 1.15),\n    next7DaysGuests: Math.round((statisticsItem.totalGuests / 52) * 1.15),\n    growthRate: {\n      yearly: 0.15,\n      monthly: 0.15,\n      weekly: 0.15\n    },\n    insights: [\n      \"Maintain service quality\", \n      \"Focus on high-satisfaction room types\", \n      \"Optimize pricing strategy\"\n    ],\n    recommendations: [\n      \"Implement loyalty program\", \n      \"Expand marketing efforts\", \n      \"Improve operational efficiency\"\n    ],\n    seasonalTrends: {\n      trends: \"Insufficient data to determine seasonal trends\",\n      recommendations: \"Collect historical data to identify patterns\"\n    }\n  };\n}\n\n// Combine statistics with AI predictions\nconst dashboardData = {\n  ...statisticsItem,\n  predictions: aiPredictions,\n  lastUpdated: new Date().toISOString()\n};\n\nreturn [{ json: dashboardData }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        240
+      ],
+      "id": "267fe328-5b64-46ca-bde5-3b165cdc0e1c",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst bookings = items.map(item => item.json);\n\n// Calculate key metrics\nconst totalRevenue = bookings.reduce((sum, b) => sum + b.total_price, 0);\nconst totalGuests = bookings.reduce((sum, b) => sum + b.guest_number, 0);\nconst avgSatisfaction = bookings.reduce((sum, b) => sum + b.guest_satisfaction, 0) / bookings.length;\nconst avgNightsStay = bookings.reduce((sum, b) => sum + b.spend_nights, 0) / bookings.length;\nconst avgRevenuePerBooking = totalRevenue / bookings.length;\n\n// Room type analysis\nconst roomTypes = bookings.reduce((acc, b) => {\n  acc[b.room_type] = (acc[b.room_type] || 0) + 1;\n  return acc;\n}, {});\n\n// Monthly breakdown\nconst monthlyData = bookings.reduce((acc, b) => {\n  const month = new Date(b.check_in_date).toLocaleString('default', { month: 'short' });\n  if (!acc[month]) {\n    acc[month] = { month, revenue: 0, guests: 0, bookings: 0 };\n  }\n  acc[month].revenue += b.total_price;\n  acc[month].guests += b.guest_number;\n  acc[month].bookings += 1;\n  return acc;\n}, {});\n\nconst statistics = {\n  totalRevenue,\n  totalGuests,\n  totalBookings: bookings.length,\n  avgSatisfaction,\n  avgNightsStay,\n  avgRevenuePerBooking,\n  roomTypes,\n  monthlyData: Object.values(monthlyData),\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: statistics }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        240
+      ],
+      "id": "531ba805-a2d0-4e83-abd1-7d5bf1f9bff1",
+      "name": "Calculate Statistics"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://luxurystay-f4d48-default-rtdb.firebaseio.com/dashboard-analytics.json?auth=1DtpRkKj8MGSUF633U0Y6zwrX3I33jipiZQFKVQ9",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "dashboard",
+              "value": "={{JSON.stringify($json)}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        144
+      ],
+      "id": "4e7a0a89-1954-4dac-9102-271c17df4fa7",
+      "name": "HTTP Request - Store Dashboard Data Back to Firebase"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "144V94TEknPoE-uzBwIHOEJa_8XI7f147kELM_JpZNo8",
+          "mode": "list",
+          "cachedResultName": "Analyse 2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/144V94TEknPoE-uzBwIHOEJa_8XI7f147kELM_JpZNo8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/144V94TEknPoE-uzBwIHOEJa_8XI7f147kELM_JpZNo8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "unique_id"
+          ],
+          "schema": [
+            {
+              "id": "unique_id",
+              "displayName": "unique_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "booking_timestamp",
+              "displayName": "booking_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "check_in_date",
+              "displayName": "check_in_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "check_out_date",
+              "displayName": "check_out_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "guest_number",
+              "displayName": "guest_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "guest_satisfaction",
+              "displayName": "guest_satisfaction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "room_per_night",
+              "displayName": "room_per_night",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "room_type",
+              "displayName": "room_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "spend_nights",
+              "displayName": "spend_nights",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total_price",
+              "displayName": "total_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        0
+      ],
+      "id": "ff447dda-6392-4fd5-a04b-7f0a0ebbf27b",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7jUyEvjaqbnInMDD",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input items (for runOnceForAllItems mode)\nconst input = $input.first();\nconst firebaseData = input.json;\nconst items = [];\n\nfor (const uniqueId in firebaseData) {\n  const booking = firebaseData[uniqueId];\n  items.push({\n    json: {\n      unique_id: input.json.id,\n      booking_timestamp: booking.booking_timestamp || input.json.data?.booking_timestamp,\n      check_in_date: booking.check_in_date || input.json.data?.check_in_date,\n      check_out_date: booking.check_out_date || input.json.data?.check_out_date,\n      customer_email: booking.customer_email || input.json.data?.customer_email,\n      customer_name: booking.customer_name || input.json.data?.customer_name,\n      guest_number: booking.guest_number || input.json.data?.guest_number,\n      guest_satisfaction: booking.guest_satisfaction || input.json.data?.guest_satisfaction,\n      room_per_night: booking.room_per_night || input.json.data?.room_per_night,\n      room_type: booking.room_type || input.json.data?.room_type,\n      spend_nights: booking.spend_nights || input.json.data?.spend_nights,\n      total_price: booking.total_price || input.json.data?.total_price,\n      status: booking.status || input.json.data?.status\n    }\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        0
+      ],
+      "id": "0c899f8c-5b87-46d3-aa65-7b87578d32aa",
+      "name": "Code in Firebase data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "=Dear  {{ $json.customer_name }}",
+        "emailType": "text",
+        "message": "=Thank you for choosing our services! \nPlease find below your booking e-billing information:\n\n📄 Booking Details\nCustomer Name: Mr.{{ $json.customer_name }}\nRoom Type: {{ $json.room_type }}  (Single / Double / Suite)\nNumber of Guests:  {{ $json.guest_number }}\nTotal Price: ${{ $json.total_price }}\nIf you have any questions or would like to make changes to your reservation,\nplease feel free to contact us anytime  \n\nwe’re happy to help!\nWe look forward to welcoming you!\n\n🏨✨Best Regards,\nHotel Reservation Team\n📞 +94721298380",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1232,
+        0
+      ],
+      "id": "694911d1-d7b0-449c-b7de-2242c3f9bb09",
+      "name": "Customer message",
+      "webhookId": "0743a17f-6c4f-403d-8226-a518a1c08f80",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OBfFDYyT499wzHWH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Data Visualizer</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js\"></script>\n    <style>\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n\n        body {\n            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;\n            background: linear-gradient(135deg, #0a1628 0%, #162238 100%);\n            min-height: 100vh;\n            color: #e5e7eb;\n        }\n\n        .header {\n            background: rgba(10, 22, 40, 0.95);\n            border-bottom: 1px solid rgba(212, 175, 55, 0.3);\n            box-shadow: 0 2px 10px rgba(0,0,0,0.3);\n        }\n\n        .header-content {\n            max-width: 1280px;\n            margin: 0 auto;\n            padding: 1.5rem;\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            flex-wrap: wrap;\n            gap: 1rem;\n        }\n\n        .header-title h1 {\n            font-size: 1.5rem;\n            font-weight: 700;\n            color: #d4af37;\n        }\n\n        .header-title p {\n            font-size: 0.875rem;\n            color: #9ca3af;\n        }\n\n        .header-buttons {\n            display: flex;\n            gap: 0.75rem;\n            flex-wrap: wrap;\n        }\n\n        .btn {\n            display: flex;\n            align-items: center;\n            gap: 0.5rem;\n            padding: 0.5rem 1rem;\n            border: none;\n            border-radius: 0.5rem;\n            font-size: 0.875rem;\n            font-weight: 500;\n            cursor: pointer;\n            transition: all 0.2s;\n        }\n\n        .btn-blue {\n            background: #b5179e;\n            color: white;\n        }\n\n        .btn-blue:hover {\n            background: #7209b7;\n        }\n\n        .btn-green {\n            background: #16a34a;\n            color: white;\n        }\n\n        .btn-green:hover {\n            background: #15803d;\n        }\n\n        .btn-gray {\n            background: #52b69a;\n            color: white;\n            border: 1px solid rgba(212, 175, 55, 0.3);\n        }\n\n        .btn-gray:hover {\n            background: #34a0a4;\n        }\n\n        .container {\n            max-width: 1280px;\n            margin: 0 auto;\n            padding: 1.5rem;\n        }\n\n        .tabs {\n            background: rgba(22, 34, 56, 0.6);\n            border-radius: 0.5rem;\n            box-shadow: 0 2px 8px rgba(0,0,0,0.3);\n            margin-bottom: 1.5rem;\n            padding: 0.5rem;\n            display: flex;\n            gap: 0.5rem;\n            flex-wrap: wrap;\n            border: 1px solid rgba(212, 175, 55, 0.2);\n        }\n\n        .tab {\n            flex: 1;\n            min-width: 100px;\n            padding: 0.5rem 1rem;\n            border: none;\n            border-radius: 0.5rem;\n            font-weight: 500;\n            cursor: pointer;\n            transition: all 0.2s;\n            background: rgba(255, 255, 255, 0.05);\n            color: #9ca3af;\n        }\n\n        .tab:hover {\n            background: rgba(255, 255, 255, 0.1);\n            color: #e5e7eb;\n        }\n\n        .tab.active {\n            background: #d4af37;\n            color: #0a1628;\n        }\n\n        .view {\n            display: none;\n        }\n\n        .view.active {\n            display: block;\n        }\n\n        .card {\n            background: rgba(22, 34, 56, 0.6);\n            border-radius: 0.5rem;\n            box-shadow: 0 2px 8px rgba(0,0,0,0.3);\n            padding: 1.5rem;\n            margin-bottom: 1.5rem;\n            border: 1px solid rgba(212, 175, 55, 0.2);\n        }\n\n        .grid {\n            display: grid;\n            gap: 1.5rem;\n            margin-bottom: 1.5rem;\n        }\n\n        .grid-4 {\n            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n        }\n\n        .grid-2 {\n            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));\n        }\n\n        .grid-3 {\n            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n        }\n\n        .metric-card {\n            border-radius: 0.5rem;\n            padding: 1.5rem;\n            color: white;\n            box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n        }\n\n        .metric-card-blue {\n            background: linear-gradient(135deg, #3b82f6 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .metric-card-green {\n            background: linear-gradient(135deg, #10b981 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .metric-card-yellow {\n            background: linear-gradient(135deg, #9e2a2b 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .metric-card-purple {\n            background: linear-gradient(135deg, #8b5cf6 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .metric-header {\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            margin-bottom: 0.5rem;\n        }\n\n        .metric-badge {\n            font-size: 0.75rem;\n            padding: 0.25rem 0.75rem;\n            border-radius: 9999px;\n            background: rgba(10, 22, 40, 0.4);\n            color: #0a1628;\n        }\n\n        .metric-value {\n            font-size: 2rem;\n            font-weight: 700;\n            margin-bottom: 0.25rem;\n        }\n\n        .metric-label {\n            font-size: 0.875rem;\n            opacity: 0.9;\n        }\n\n        textarea {\n            width: 100%;\n            height: 300px;\n            padding: 1rem;\n            border: 1px solid rgba(212, 175, 55, 0.3);\n            border-radius: 0.5rem;\n            font-family: monospace;\n            font-size: 0.875rem;\n            resize: vertical;\n            background: rgba(10, 22, 40, 0.4);\n            color: #e5e7eb;\n        }\n\n        textarea:focus {\n            outline: none;\n            border-color: #d4af37;\n            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);\n        }\n\n        .error {\n            color: #dc2626;\n            font-size: 0.875rem;\n            margin-top: 0.5rem;\n        }\n\n        .tip {\n            background: rgba(212, 175, 55, 0.1);\n            border: 1px solid rgba(212, 175, 55, 0.3);\n            border-radius: 0.5rem;\n            padding: 1rem;\n            margin-top: 1rem;\n        }\n\n        .tip-text {\n            font-size: 0.875rem;\n            color: #d4af37;\n        }\n\n        .chart-container {\n            position: relative;\n            height: 300px;\n            margin-top: 1rem;\n        }\n\n        .chart-container-tall {\n            height: 350px;\n        }\n\n        .card-title {\n            font-size: 1.125rem;\n            font-weight: 600;\n            color: #d4af37;\n            margin-bottom: 1rem;\n        }\n\n        .stat-row {\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            padding: 0.75rem 0;\n            border-bottom: 1px solid rgba(212, 175, 55, 0.1);\n        }\n\n        .stat-row:last-child {\n            border-bottom: none;\n        }\n\n        .stat-label {\n            color: white;\n        }\n\n        .stat-value {\n            font-weight: 700;\n            font-size: 1.25rem;\n            color: #e5e7eb;\n        }\n\n        .insight-card, .recommendation-card {\n            display: flex;\n            gap: 1rem;\n            padding: 1rem;\n            border-radius: 0.5rem;\n            margin-bottom: 0.75rem;\n        }\n\n        .insight-card {\n            background: rgba(212, 175, 55, 0.15);\n            border: 1px solid rgba(212, 175, 55, 0.3);\n        }\n\n        .recommendation-card {\n            background: rgba(212, 175, 55, 0.15);\n            border: 1px solid rgba(212, 175, 55, 0.3);\n        }\n\n        .insight-number, .recommendation-check {\n            width: 1.5rem;\n            height: 1.5rem;\n            border-radius: 9999px;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            font-weight: 700;\n            font-size: 0.875rem;\n            flex-shrink: 0;\n            color: white;\n        }\n\n        .insight-number {\n            background: #d4af37;\n            color: #0a1628;\n        }\n\n        .recommendation-check {\n            background: #d4af37;\n            color: #0a1628;\n        }\n\n        .insight-text, .recommendation-text {\n            color: #e5e7eb;\n            line-height: 1.5;\n        }\n\n        .room-legend {\n            display: flex;\n            align-items: center;\n            justify-content: space-between;\n            padding: 0.5rem 0;\n        }\n\n        .room-legend-left {\n            display: flex;\n            align-items: center;\n            gap: 0.75rem;\n        }\n\n        .room-color {\n            width: 1rem;\n            height: 1rem;\n            border-radius: 0.25rem;\n        }\n\n        .room-name {\n            color: white;\n        }\n\n        .room-value {\n            font-weight: 600;\n            color: #e5e7eb;\n        }\n\n        .forecast-card {\n            border-radius: 0.5rem;\n            padding: 2rem;\n            color: white;\n            box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n        }\n\n        .forecast-card-green {\n            background: linear-gradient(135deg, #10b981 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .forecast-card-blue {\n            background: linear-gradient(135deg, #3b82f6 0%, #b8941f 100%);\n            color: #0a1628;\n        }\n\n        .forecast-label {\n            font-size: 0.875rem;\n            opacity: 0.9;\n            margin-bottom: 0.5rem;\n        }\n\n        .forecast-value {\n            font-size: 2.5rem;\n            font-weight: 700;\n            margin-bottom: 0.5rem;\n        }\n\n        .forecast-badge {\n            display: inline-block;\n            font-size: 0.875rem;\n            padding: 0.25rem 0.75rem;\n            border-radius: 9999px;\n            background: rgba(10, 22, 40, 0.4);\n            color: #0a1628;\n        }\n\n        input[type=\"file\"] {\n            display: none;\n        }\n\n        @media (max-width: 768px) {\n            .grid-2, .grid-3, .grid-4 {\n                grid-template-columns: 1fr;\n            }\n\n            .header-content {\n                flex-direction: column;\n                align-items: flex-start;\n            }\n        }\n    </style>\n</head>\n<body>\n    <div class=\"header\">\n        <div class=\"header-content\">\n            <div class=\"header-title\">\n                <h1>Data Visualizer</h1>\n                <p>Hotel Management Analytics & Prediction Dashboard</p>\n            </div>\n            <div class=\"header-buttons\">\n                <button class=\"btn btn-blue\" onclick=\"loadSampleData()\">\n                    <span>🔄</span> Load Sample\n                </button>\n                <label class=\"btn btn-green\">\n                    <span>📤</span> Upload JSON\n                    <input type=\"file\" accept=\".json\" onchange=\"handleFileUpload(event)\">\n                </label>\n                <button class=\"btn btn-gray\" onclick=\"downloadJson()\">\n                    <span>📥</span> Export\n                </button>\n            </div>\n        </div>\n    </div>\n\n    <div class=\"container\">\n        <div class=\"tabs\">\n            <button class=\"tab active\" onclick=\"switchView('overview')\">Overview</button>\n            <button class=\"tab\" onclick=\"switchView('revenue')\">Revenue</button>\n            <button class=\"tab\" onclick=\"switchView('guests')\">Guests</button>\n            <button class=\"tab\" onclick=\"switchView('predictions')\">Predictions</button>\n            <button class=\"tab\" onclick=\"switchView('raw')\">Raw</button>\n        </div>\n\n        <!-- Raw Data View -->\n        <div id=\"raw-view\" class=\"view\">\n            <div class=\"card\">\n                <h3 class=\"card-title\">Paste n8n Output JSON</h3>\n                <textarea id=\"json-input\" placeholder=\"Paste your n8n workflow output JSON here...\"></textarea>\n                <div id=\"error-message\" class=\"error\"></div>\n                <div class=\"tip\">\n                    <p class=\"tip-text\"><strong>Tip:</strong> Copy the JSON output from your n8n workflow and paste it here.</p>\n                </div>\n            </div>\n        </div>\n\n        <!-- Overview View -->\n        <div id=\"overview-view\" class=\"view active\">\n            <div class=\"grid grid-4\">\n                <div class=\"metric-card metric-card-blue\">\n                    <div class=\"metric-header\">\n                        <span style=\"font-size: 2rem;\">💰</span>\n                        <span class=\"metric-badge\">Current</span>\n                    </div>\n                    <div class=\"metric-value\" id=\"total-revenue\">$0</div>\n                    <div class=\"metric-label\">Total Revenue</div>\n                </div>\n                <div class=\"metric-card metric-card-green\">\n                    <div class=\"metric-header\">\n                        <span style=\"font-size: 2rem;\">👥</span>\n                        <span class=\"metric-badge\">Total</span>\n                    </div>\n                    <div class=\"metric-value\" id=\"total-guests\">0</div>\n                    <div class=\"metric-label\">Total Guests</div>\n                </div>\n                <div class=\"metric-card metric-card-yellow\">\n                    <div class=\"metric-header\">\n                        <span style=\"font-size: 2rem;\">⭐</span>\n                        <span class=\"metric-badge\">Rating</span>\n                    </div>\n                    <div class=\"metric-value\" id=\"avg-satisfaction\">0/5</div>\n                    <div class=\"metric-label\">Avg Satisfaction</div>\n                </div>\n                <div class=\"metric-card metric-card-purple\">\n                    <div class=\"metric-header\">\n                        <span style=\"font-size: 2rem;\">📅</span>\n                        <span class=\"metric-badge\">Average</span>\n                    </div>\n                    <div class=\"metric-value\" id=\"avg-nights\">0</div>\n                    <div class=\"metric-label\">Nights per Stay</div>\n                </div>\n            </div>\n\n            <div class=\"grid grid-2\">\n                <div class=\"card\">\n                    <h3 class=\"card-title\">Performance Overview</h3>\n                    <div class=\"chart-container\">\n                        <canvas id=\"performance-chart\"></canvas>\n                    </div>\n                </div>\n                <div class=\"card\">\n                    <h3 class=\"card-title\">Room Type Distribution</h3>\n                    <div class=\"chart-container\">\n                        <canvas id=\"room-chart\"></canvas>\n                    </div>\n                </div>\n            </div>\n        </div>\n\n        <!-- Revenue View -->\n        <div id=\"revenue-view\" class=\"view\">\n            <div class=\"card\">\n                <h3 class=\"card-title\">Revenue Trend</h3>\n                <div class=\"chart-container chart-container-tall\">\n                    <canvas id=\"revenue-chart\"></canvas>\n                </div>\n            </div>\n            <div class=\"grid grid-3\">\n                <div class=\"card\">\n                    <p class=\"stat-label\">Total Revenue</p>\n                    <p class=\"stat-value\" style=\"color: #d4af37;\" id=\"revenue-total\">$0</p>\n                </div>\n                <div class=\"card\">\n                    <p class=\"stat-label\">Avg per Booking</p>\n                    <p class=\"stat-value\" style=\"color: #d4af37;\" id=\"revenue-avg\">$0</p>\n                </div>\n                <div class=\"card\">\n                    <p class=\"stat-label\">Total Bookings</p>\n                    <p class=\"stat-value\" style=\"color: #d4af37;\" id=\"revenue-bookings\">0</p>\n                </div>\n            </div>\n        </div>\n\n        <!-- Guests View -->\n        <div id=\"guests-view\" class=\"view\">\n            <div class=\"card\">\n                <h3 class=\"card-title\">Guest Arrivals by Month</h3>\n                <div class=\"chart-container chart-container-tall\">\n                    <canvas id=\"guests-chart\"></canvas>\n                </div>\n            </div>\n            <div class=\"grid grid-2\">\n                <div class=\"card\">\n                    <h4 class=\"card-title\">Guest Statistics</h4>\n                    <div class=\"stat-row\">\n                        <span class=\"stat-label\">Total Guests</span>\n                        <span class=\"stat-value\" id=\"guests-total\">0</span>\n                    </div>\n                    <div class=\"stat-row\">\n                        <span class=\"stat-label\">Avg Nights Stay</span>\n                        <span class=\"stat-value\" id=\"guests-nights\">0</span>\n                    </div>\n                    <div class=\"stat-row\">\n                        <span class=\"stat-label\">Satisfaction Score</span>\n                        <span class=\"stat-value\" id=\"guests-satisfaction\">0/5</span>\n                    </div>\n                </div>\n                <div class=\"card\">\n                    <h4 class=\"card-title\">Room Preferences</h4>\n                    <div id=\"room-preferences\"></div>\n                </div>\n            </div>\n        </div>\n\n        <!-- Predictions View -->\n        <div id=\"predictions-view\" class=\"view\">\n            <div class=\"grid grid-2\">\n                <div class=\"forecast-card forecast-card-green\">\n                    <span style=\"font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.8;\">📈</span>\n                    <p class=\"forecast-label\">Next Year Revenue Forecast</p>\n                    <p class=\"forecast-value\" id=\"forecast-revenue\">$0</p>\n                    <p class=\"forecast-badge\" id=\"forecast-growth\">+0% Growth Rate</p>\n                </div>\n                <div class=\"forecast-card forecast-card-blue\">\n                    <span style=\"font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.8;\">👥</span>\n                    <p class=\"forecast-label\">Expected Guests Next Year</p>\n                    <p class=\"forecast-value\" id=\"forecast-guests\">0</p>\n                    <p class=\"forecast-badge\">Based on current trends</p>\n                </div>\n            </div>\n\n            <!-- NEW: Prediction Charts -->\n            <div class=\"grid grid-2\">\n                <div class=\"card\">\n                    <h3 class=\"card-title\">Revenue Predictions</h3>\n                    <div class=\"chart-container\">\n                        <canvas id=\"revenue-predictions-chart\"></canvas>\n                    </div>\n                </div>\n                <div class=\"card\">\n                    <h3 class=\"card-title\">Guest Predictions</h3>\n                    <div class=\"chart-container\">\n                        <canvas id=\"guest-predictions-chart\"></canvas>\n                    </div>\n                </div>\n            </div>\n\n            <div class=\"card\">\n                <h3 class=\"card-title\">AI-Generated Insights</h3>\n                <div id=\"insights-container\"></div>\n            </div>\n            <div class=\"card\">\n                <h3 class=\"card-title\">Recommendations</h3>\n                <div id=\"recommendations-container\"></div>\n            </div>\n        </div>\n    </div>\n\n    <script>\n        let currentData = null;\n        let charts = {};\n\n        const sampleData = {\n            totalRevenue: {{ $json.totalRevenue }},\n            totalGuests: {{ $json.totalGuests }},\n            totalBookings: {{ $json.totalBookings }},\n            avgSatisfaction: {{ $json.avgSatisfaction }},\n            avgNightsStay: {{ $json.avgNightsStay }},\n            avgRevenuePerBooking: {{ $json.avgRevenuePerBooking }},\n            roomTypes: {\n                \"Deluxe\": {{ $json.roomTypes.deluxe }},\n                \"Suite\": {{ $json.roomTypes.suite }},\n                \"Standard\": {{ $json.roomTypes.standard }},\n                \"Presidential\": {{ $json.roomTypes.presidential }}\n            },\n            monthlyData: [\n                { month: \"{{ $json.monthlyData[1].month }}\", revenue: {{ $json.monthlyData[1].revenue }}, guests: {{ $json.monthlyData[1].guests }}, bookings: {{ $json.monthlyData[1].bookings }} },\n                { month: \"{{ $json.monthlyData[0].month }}\", revenue: {{ $json.monthlyData[0].revenue }}, guests: {{ $json.monthlyData[0].guests }}, bookings: {{ $json.monthlyData[0].bookings }} },\n                { month: \"{{ $json.monthlyData[2].month }}\", revenue: {{ $json.monthlyData[2].revenue }}, guests: {{ $json.monthlyData[2].guests }}, bookings: {{ $json.monthlyData[2].bookings }} },\n                { month: \"{{ $json.monthlyData[3].month }}\", revenue: {{ $json.monthlyData[3].revenue }}, guests: {{ $json.monthlyData[3].guests }}, bookings: {{ $json.monthlyData[3].bookings }} },\n                { month: \"{{ $json.monthlyData[4].month }}\", revenue: {{ $json.monthlyData[4].revenue }}, guests: {{ $json.monthlyData[4].guests }}, bookings: {{ $json.monthlyData[4].bookings }} }\n            ],\n            predictions: {\n                nextYearRevenue: {{ $json.predictions.nextYearRevenue.year }},\n                nextMonthRevenue: {{ $json.predictions.nextYearRevenue.month }},\n                next7DaysRevenue: {{ $json.predictions.nextYearRevenue['7days'] }},\n                nextYearGuests: {{ $json.predictions.nextYearGuests.year }},\n                nextMonthGuests: {{ $json.predictions.nextYearGuests.month }},\n                next7DaysGuests: {{ $json.predictions.nextYearGuests['7days'] }},\n                growthRate: {\n                    yearly: {{ $json.predictions.growthRate.year }},\n                    monthly: {{ $json.predictions.growthRate.month }},\n                    weekly: {{ $json.predictions.growthRate['7days'] }}\n                },\n                insights: [\n                    \"{{ $json.predictions.insights[0] }}\",\n                    \"{{ $json.predictions.insights[1] }}\",\n                    \"{{ $json.predictions.insights[2] }}\"\n                ],\n                recommendations: [\n                    \"{{ $json.predictions.recommendations[0] }}\",\n                    \"{{ $json.predictions.recommendations[1] }}\",\n                    \"{{ $json.predictions.recommendations[2] }}\"\n                ]\n            },\n            timestamp: new Date().toISOString()\n        };\n\n        function switchView(viewName) {\n            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));\n            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));\n            \n            document.getElementById(viewName + '-view').classList.add('active');\n            event.target.classList.add('active');\n        }\n\n        function loadSampleData() {\n            currentData = sampleData;\n            document.getElementById('json-input').value = JSON.stringify(sampleData, null, 2);\n            document.getElementById('error-message').textContent = '';\n            updateDashboard();\n        }\n\n        function handleFileUpload(event) {\n            const file = event.target.files[0];\n            if (file) {\n                const reader = new FileReader();\n                reader.onload = (e) => {\n                    const content = e.target.result;\n                    document.getElementById('json-input').value = content;\n                    try {\n                        currentData = JSON.parse(content);\n                        document.getElementById('error-message').textContent = '';\n                        updateDashboard();\n                    } catch (err) {\n                        document.getElementById('error-message').textContent = 'Invalid JSON file';\n                    }\n                };\n                reader.readAsText(file);\n            }\n        }\n\n        function downloadJson() {\n            const dataStr = document.getElementById('json-input').value || JSON.stringify(sampleData, null, 2);\n            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);\n            const link = document.createElement('a');\n            link.setAttribute('href', dataUri);\n            link.setAttribute('download', 'hotel-data.json');\n            link.click();\n        }\n\n        document.getElementById('json-input').addEventListener('input', (e) => {\n            try {\n                currentData = JSON.parse(e.target.value);\n                document.getElementById('error-message').textContent = '';\n                updateDashboard();\n            } catch (err) {\n                document.getElementById('error-message').textContent = 'Invalid JSON format';\n            }\n        });\n\n        function updateDashboard() {\n            if (!currentData) return;\n\n            // Update metrics\n            document.getElementById('total-revenue').textContent = '$' + currentData.totalRevenue.toLocaleString();\n            document.getElementById('total-guests').textContent = currentData.totalGuests.toLocaleString();\n            document.getElementById('avg-satisfaction').textContent = currentData.avgSatisfaction.toFixed(1) + '/5';\n            document.getElementById('avg-nights').textContent = currentData.avgNightsStay.toFixed(1);\n\n            // Revenue view\n            document.getElementById('revenue-total').textContent = '$' + currentData.totalRevenue.toLocaleString();\n            document.getElementById('revenue-avg').textContent = '$' + currentData.avgRevenuePerBooking.toFixed(2);\n            document.getElementById('revenue-bookings').textContent = currentData.totalBookings.toLocaleString();\n\n            // Guests view\n            document.getElementById('guests-total').textContent = currentData.totalGuests.toLocaleString();\n            document.getElementById('guests-nights').textContent = currentData.avgNightsStay.toFixed(1);\n            document.getElementById('guests-satisfaction').textContent = currentData.avgSatisfaction.toFixed(1) + '/5';\n\n            // Room preferences\n            const roomColors = ['#3B82F6', '#10B981', '#F59E0B', '#B727F5'];\n            const roomPrefs = document.getElementById('room-preferences');\n            roomPrefs.innerHTML = '';\n            Object.entries(currentData.roomTypes).forEach(([name, value], index) => {\n                const total = Object.values(currentData.roomTypes).reduce((a, b) => a + b, 0);\n                const percentage = ((value / total) * 100).toFixed(1);\n                roomPrefs.innerHTML += `\n                    <div class=\"room-legend\">\n                        <div class=\"room-legend-left\">\n                            <div class=\"room-color\" style=\"background: ${roomColors[index]}\"></div>\n                            <span class=\"room-name\">${name}</span>\n                        </div>\n                        <span class=\"room-value\">${value} (${percentage}%)</span>\n                    </div>\n                `;\n            });\n\n            // Predictions\n            if (currentData.predictions) {\n                document.getElementById('forecast-revenue').textContent = '$' + currentData.predictions.nextYearRevenue.toLocaleString();\n                document.getElementById('forecast-guests').textContent = currentData.predictions.nextYearGuests.toLocaleString();\n                \n                const yearlyGrowth = currentData.predictions.growthRate?.yearly || 0;\n                document.getElementById('forecast-growth').textContent = '+' + (yearlyGrowth * 100).toFixed(0) + '% Growth Rate';\n\n                // Insights\n                const insightsContainer = document.getElementById('insights-container');\n                insightsContainer.innerHTML = '';\n                currentData.predictions.insights.forEach((insight, index) => {\n                    insightsContainer.innerHTML += `\n                        <div class=\"insight-card\">\n                            <div class=\"insight-number\">${index + 1}</div>\n                            <div class=\"insight-text\">${insight}</div>\n                        </div>\n                    `;\n                });\n\n                // Recommendations\n                const recsContainer = document.getElementById('recommendations-container');\n                recsContainer.innerHTML = '';\n                currentData.predictions.recommendations.forEach((rec) => {\n                    recsContainer.innerHTML += `\n                        <div class=\"recommendation-card\">\n                            <div class=\"recommendation-check\">✓</div>\n                            <div class=\"recommendation-text\">${rec}</div>\n                        </div>\n                    `;\n                });\n            }\n\n            updateCharts();\n        }\n\n        function updateCharts() {\n            // Destroy existing charts\n            Object.values(charts).forEach(chart => {\n                if (chart) chart.destroy();\n            });\n\n            // Performance Chart\n            const perfData = [\n                (currentData.totalRevenue / (currentData.predictions?.nextYearRevenue || 1450000)) * 100,\n                (currentData.avgSatisfaction ) * 100,\n                (currentData.totalBookings / ((currentData.predictions?.nextYearGuests || 2850)/3)) * 100,\n                75,\n                (currentData.totalGuests / (currentData.predictions?.nextYearGuests || 2850)) * 100\n            ];\n\n            charts.performance = new Chart(document.getElementById('performance-chart'), {\n                type: 'radar',\n                data: {\n                    labels: ['Revenue', 'Satisfaction', 'Bookings', 'Occupancy', 'Guests'],\n                    datasets: [{\n                        label: 'Performance',\n                        data: perfData,\n                        backgroundColor: 'rgba(212, 175, 55, 0.2)',\n                        borderColor: '#d4af37',\n                        pointBackgroundColor: '#d4af37'\n                    }]\n                },\n                options: {\n                    responsive: true,\n                    maintainAspectRatio: false,\n                    scales: {\n                        r: {\n                            beginAtZero: true,\n                            max: 100,\n                            ticks: {\n                                color: '#e5e7eb'\n                            },\n                            grid: {\n                                color: 'rgba(212, 175, 55, 0.2)'\n                            },\n                            pointLabels: {\n                                color: '#e5e7eb'\n                            }\n                        }\n                    },\n                    plugins: {\n                        legend: {\n                            labels: {\n                                color: '#e5e7eb'\n                            }\n                        }\n                    }\n                }\n            });\n\n            // Room Distribution Chart\n            const roomLabels = Object.keys(currentData.roomTypes);\n            const roomValues = Object.values(currentData.roomTypes);\n            const roomColors = ['#3B82F6', '#10B981', '#F59E0B', '#B727F5'];\n\n            charts.rooms = new Chart(document.getElementById('room-chart'), {\n                type: 'doughnut',\n                data: {\n                    labels: roomLabels,\n                    datasets: [{\n                        data: roomValues,\n                        backgroundColor: roomColors\n                    }]\n                },\n                options: {\n                    responsive: true,\n                    maintainAspectRatio: false,\n                    plugins: {\n                        legend: {\n                            labels: {\n                                color: '#e5e7eb'\n                            }\n                        }\n                    }\n                }\n            });\n\n            // Revenue Chart\n            charts.revenue = new Chart(document.getElementById('revenue-chart'), {\n                type: 'line',\n                data: {\n                    labels: currentData.monthlyData.map(d => d.month),\n                    datasets: [{\n                        label: 'Revenue ($)',\n                        data: currentData.monthlyData.map(d => d.revenue),\n                        borderColor: 'rgb(59, 130, 246)',\n                        backgroundColor: 'rgba(59, 130, 246, 0.1)',\n                        fill: true,\n                        tension: 0.4\n                    }]\n                },\n                options: {\n                    responsive: true,\n                    maintainAspectRatio: false,\n                    plugins: {\n                        legend: {\n                            labels: {\n                                color: '#e5e7eb'\n                            }\n                        }\n                    },\n                    scales: {\n                        y: {\n                            ticks: {\n                                color: '#e5e7eb'\n                            },\n                            grid: {\n                                color: 'rgba(212, 175, 55, 0.1)'\n                            }\n                        },\n                        x: {\n                            ticks: {\n                                color: '#e5e7eb'\n                            },\n                            grid: {\n                                color: 'rgba(212, 175, 55, 0.1)'\n                            }\n                        }\n                    }\n                }\n            });\n\n            // Guests Chart\n            charts.guests = new Chart(document.getElementById('guests-chart'), {\n                type: 'bar',\n                data: {\n                    labels: currentData.monthlyData.map(d => d.month),\n                    datasets: [\n                        {\n                            label: 'Number of Guests',\n                            data: currentData.monthlyData.map(d => d.guests),\n                            backgroundColor: 'rgb(16, 185, 129)'\n                        },\n                        {\n                            label: 'Number of Bookings',\n                            data: currentData.monthlyData.map(d => d.bookings),\n                            backgroundColor: 'rgb(245, 158, 11)'\n                        }\n                    ]\n                },\n                options: {\n                    responsive: true,\n                    maintainAspectRatio: false,\n                    plugins: {\n                        legend: {\n                            labels: {\n                                color: '#e5e7eb'\n                            }\n                        }\n                    },\n                    scales: {\n                        y: {\n                            ticks: {\n                                color: '#e5e7eb'\n                            },\n                            grid: {\n                                color: 'rgba(212, 175, 55, 0.1)'\n                            }\n                        },\n                        x: {\n                            ticks: {\n                                color: '#e5e7eb'\n                            },\n                            grid: {\n                                color: 'rgba(212, 175, 55, 0.1)'\n                            }\n                        }\n                    }\n                }\n            });\n\n            // NEW: Revenue Predictions Chart\n            if (currentData.predictions) {\n                charts.revenuePredictions = new Chart(document.getElementById('revenue-predictions-chart'), {\n                    type: 'bar',\n                    data: {\n                        labels: ['7 Days', 'Next Month', 'Next Year'],\n                        datasets: [{\n                            label: 'Predicted Revenue ($)',\n                            data: [\n                                currentData.predictions.next7DaysRevenue || 0,\n                                currentData.predictions.nextMonthRevenue || 0,\n                                currentData.predictions.nextYearRevenue || 0\n                            ],\n                            backgroundColor: [\n                                'rgba(59, 130, 246, 0.8)',\n                                'rgba(16, 185, 129, 0.8)',\n                                'rgba(212, 175, 55, 0.8)'\n                            ],\n                            borderColor: [\n                                'rgb(59, 130, 246)',\n                                'rgb(16, 185, 129)',\n                                'rgb(212, 175, 55)'\n                            ],\n                            borderWidth: 2\n                        }]\n                    },\n                    options: {\n                        responsive: true,\n                        maintainAspectRatio: false,\n                        plugins: {\n                            legend: {\n                                labels: {\n                                    color: '#e5e7eb'\n                                }\n                            },\n                            tooltip: {\n                                callbacks: {\n                                    label: function(context) {\n                                        return '$' + context.parsed.y.toLocaleString();\n                                    }\n                                }\n                            }\n                        },\n                        scales: {\n                            y: {\n                                beginAtZero: true,\n                                ticks: {\n                                    color: '#e5e7eb',\n                                    callback: function(value) {\n                                        return '$' + value.toLocaleString();\n                                    }\n                                },\n                                grid: {\n                                    color: 'rgba(212, 175, 55, 0.1)'\n                                }\n                            },\n                            x: {\n                                ticks: {\n                                    color: '#e5e7eb'\n                                },\n                                grid: {\n                                    color: 'rgba(212, 175, 55, 0.1)'\n                                }\n                            }\n                        }\n                    }\n                });\n\n                // NEW: Guest Predictions Chart\n                charts.guestPredictions = new Chart(document.getElementById('guest-predictions-chart'), {\n                    type: 'bar',\n                    data: {\n                        labels: ['7 Days', 'Next Month', 'Next Year'],\n                        datasets: [{\n                            label: 'Predicted Guests',\n                            data: [\n                                currentData.predictions.next7DaysGuests || 0,\n                                currentData.predictions.nextMonthGuests || 0,\n                                currentData.predictions.nextYearGuests || 0\n                            ],\n                            backgroundColor: [\n                                'rgba(139, 92, 246, 0.8)',\n                                'rgba(245, 158, 11, 0.8)',\n                                'rgba(220, 38, 38, 0.8)'\n                            ],\n                            borderColor: [\n                                'rgb(139, 92, 246)',\n                                'rgb(245, 158, 11)',\n                                'rgb(220, 38, 38)'\n                            ],\n                            borderWidth: 2\n                        }]\n                    },\n                    options: {\n                        responsive: true,\n                        maintainAspectRatio: false,\n                        plugins: {\n                            legend: {\n                                labels: {\n                                    color: '#e5e7eb'\n                                }\n                            },\n                            tooltip: {\n                                callbacks: {\n                                    label: function(context) {\n                                        return context.parsed.y.toLocaleString() + ' guests';\n                                    }\n                                }\n                            }\n                        },\n                        scales: {\n                            y: {\n                                beginAtZero: true,\n                                ticks: {\n                                    color: '#e5e7eb',\n                                    stepSize: 1\n                                },\n                                grid: {\n                                    color: 'rgba(212, 175, 55, 0.1)'\n                                }\n                            },\n                            x: {\n                                ticks: {\n                                    color: '#e5e7eb'\n                                },\n                                grid: {\n                                    color: 'rgba(212, 175, 55, 0.1)'\n                                }\n                            }\n                        }\n                    }\n                });\n            }\n        }\n\n        // Load sample data on page load\n        window.addEventListener('load', () => {\n            loadSampleData();\n        });\n    </script>\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1632,
+        336
+      ],
+      "id": "83a591a5-94e5-40b3-8b3c-6f5ebee2db01",
+      "name": "HTMLGenerate HTML with Charts"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "Vimukthi1239",
+          "mode": "list"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "hotel-analytics-dashboard-new",
+          "mode": "list",
+          "cachedResultName": "hotel-analytics-dashboard-new",
+          "cachedResultUrl": "https://github.com/Vimukthi1239/hotel-analytics-dashboard-new"
+        },
+        "filePath": "index.html",
+        "fileContent": "={{ $('HTMLGenerate HTML with Charts').item.json.html }}",
+        "commitMessage": "sucessfull"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2144,
+        272
+      ],
+      "id": "775cef97-d2ee-4688-9e3d-626df6783d48",
+      "name": "Create a file",
+      "webhookId": "0a05869c-a2df-4a66-a714-8bdc283322c6",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "yREkJNYjs7QQxaIw",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d62e236f-7b18-4e7c-88ae-5e665abee4d8",
+              "leftValue": "create",
+              "rightValue": "update",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        336
+      ],
+      "id": "1d165685-f67e-4115-be8f-2a3b11cc45fd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "Vimukthi1239",
+          "mode": "list",
+          "cachedResultName": "Vimukthi1239",
+          "cachedResultUrl": "https://github.com/Vimukthi1239"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "hotel-analytics-dashboard-new",
+          "mode": "list",
+          "cachedResultName": "hotel-analytics-dashboard-new",
+          "cachedResultUrl": "https://github.com/Vimukthi1239/hotel-analytics-dashboard-new"
+        },
+        "filePath": "index.html",
+        "fileContent": "={{ $json.html }}",
+        "commitMessage": "Right",
+        "additionalParameters": {
+          "branch": {
+            "branch": "main"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2144,
+        448
+      ],
+      "id": "2e5c34cf-f3ac-4115-a15c-f95166f0d266",
+      "name": "Edit a file",
+      "webhookId": "dee292c9-29ee-4808-9e46-eee659cca542",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "yREkJNYjs7QQxaIw",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the latest booking based on booking_timestamp\nconst latestBooking = items.reduce((latest, current) => {\n  const latestTimestamp = new Date(latest.json.booking_timestamp).getTime();\n  const currentTimestamp = new Date(current.json.booking_timestamp).getTime();\n  \n  return currentTimestamp > latestTimestamp ? current : latest;\n}, items[0]);\n\n// Convert to column-wise format\nconst columnWiseData = {\n  unique_id: latestBooking.json.unique_id,\n  booking_timestamp: latestBooking.json.booking_timestamp,\n  check_in_date: latestBooking.json.check_in_date,\n  check_out_date: latestBooking.json.check_out_date,\n  customer_email: latestBooking.json.customer_email,\n  customer_name: latestBooking.json.customer_name,\n  guest_number: latestBooking.json.guest_number,\n  guest_satisfaction: latestBooking.json.guest_satisfaction,\n  room_per_night: latestBooking.json.room_per_night,\n  room_type: latestBooking.json.room_type,\n  spend_nights: latestBooking.json.spend_nights,\n  total_price: latestBooking.json.total_price,\n  status: latestBooking.json.status\n};\n\nreturn [{ json: columnWiseData }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        0
+      ],
+      "id": "aa96e320-d71b-443f-b8b8-b2dc0b9df680",
+      "name": "Get last booking"
+    },
+    {
+      "parameters": {
+        "sendTo": "=2000malshan@gmail.com",
+        "subject": "Hello Admin",
+        "message": "=<h2>Weekly Hotel Performance Report</h2> \n<p><strong>Revenue:</strong> {{ $('Code in JavaScript2').item.json.totalRevenue }}</p> \n<p><strong>Guests:</strong> {{ $('Code in JavaScript2').item.json.totalGuests }}</p> \n<p><strong>Next Year Prediction:</strong> {{ $('Code in JavaScript2').item.json.predictions.nextYearRevenue }}</p> \n<p><strong>Expected Guests:</strong> {{ $('Code in JavaScript2').item.json.predictions.nextYearGuests }}</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1856,
+        144
+      ],
+      "id": "a97f0592-c6a3-4145-a447-c6dc3d37cfe5",
+      "name": "Admin mail",
+      "webhookId": "f8b23ebd-e791-4f11-8932-cf2bc3c25cc7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OBfFDYyT499wzHWH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform Firebase data into usable format\nconst items = $input.all();\nconst rawData = items[0].json;\n\n// Convert Firebase object to array\nconst bookingsArray = Object.entries(rawData).map(([key, booking]) => ({\n  id: key,\n  check_in_date: booking.check_in_date,\n  check_out_date: booking.check_out_date,\n  customer_email: booking.customer_email,\n  customer_name: booking.customer_name,\n  guest_number: parseInt(booking.guest_number) || 0,\n  guest_satisfaction: parseFloat(booking.guest_satisfaction) || 0,\n  room_per_night: parseFloat(booking.room_per_night) || 0,\n  room_type: booking.room_type,\n  spend_nights: parseInt(booking.spend_nights) || 0,\n  total_price: parseFloat(booking.total_price) || 0\n}));\n\n// Return each booking as separate item for processing\nreturn bookingsArray.map(booking => ({ json: booking }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        240
+      ],
+      "id": "6c10f110-f6cc-46a5-a770-7cccc7b52bce",
+      "name": "Get Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in Firebase data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Store Dashboard Data Back to Firebase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTMLGenerate HTML with Charts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Statistics": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Store Dashboard Data Back to Firebase": {
+      "main": [
+        [
+          {
+            "node": "Admin mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Customer message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Firebase data": {
+      "main": [
+        [
+          {
+            "node": "Get last booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTMLGenerate HTML with Charts": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get last booking": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a01b5106-0484-4275-a67d-0df165fbeba3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e0f5a9c892facfdee5baac34ac924010d4ecdb6c335a81be9080861581de9e8f"
+  },
+  "id": "Elq06CpeLSMgmknv",
+  "tags": []
+}

@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LuxuryStay — Premium Hotel Management</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    .gold-text { color: #D4AF37; }
+    .gold-bg { background-color: #D4AF37; }
+    .gold-border { border-color: #D4AF37; }
+    .ribbon {
+      position: absolute;
+      top: 10px;
+      right: -10px;
+      background: #D4AF37;
+      padding: 6px 20px;
+      transform: rotate(45deg);
+      font-weight: bold;
+      color: black;
+      font-size: 14px;
+    }
+    .booking-modal {
+      transition: all 0.3s ease-in-out;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .room-card {
+      transition: all 0.3s ease;
+    }
+    .room-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15);
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: #D4AF37;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+
+    /* Chatbot Styles */
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .chat-appear {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .typing-indicator {
+      animation: pulse 1.5s infinite;
+    }
+    #chat-open-btn {
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+    }
+    #chat-open-btn:hover {
+      box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+    }
+    .chat-gold-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+    }
+    
+    /* Satisfaction Rating Styles */
+    .satisfaction-option {
+      transition: all 0.3s ease;
+    }
+    .satisfaction-option:hover {
+      transform: scale(1.05);
+    }
+    .satisfaction-option.selected {
+      border-color: #D4AF37;
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+    }
+    
+    /* Admin Login Modal Styles */
+    .admin-login-modal {
+      transition: all 0.3s ease-in-out;
+    }
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+  </style>
+</head>
+<body class="bg-black text-white">
+
+<!-- NAVBAR -->
+<nav class="flex items-center justify-between p-6 bg-black border-b border-gray-800 sticky top-0 z-40">
+  <h1 class="text-2xl font-bold gold-text flex items-center">
+    <i class="fas fa-crown mr-2"></i>LuxuryStay
+  </h1>
+  <div class="flex items-center gap-3">
+    <button id="openBookingBtn" class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+      <i class="fas fa-calendar-plus mr-2"></i>Book Now
+    </button>
+    <button id="viewBookingsBtn" class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+      <i class="fas fa-list mr-2"></i>View Bookings
+    </button>
+    <button id="adminLoginBtn" class="px-4 py-2 gold-bg text-black rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center">
+      <i class="fas fa-user-shield mr-2"></i>Admin
+    </button>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="relative h-[80vh] bg-cover bg-center flex items-center justify-center overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-r from-black to-transparent z-10"></div>
+  <div class="absolute inset-0 bg-black opacity-50 z-0"></div>
+  <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+       class="absolute inset-0 w-full h-full object-cover z-0" alt="Luxury Hotel">
+  <div class="relative z-20 text-center text-white px-4 max-w-4xl fade-in">
+    <h1 class="text-5xl md:text-7xl font-bold mb-6 gold-text">LuxuryStay</h1>
+    <p class="text-xl md:text-2xl mb-8">Experience Unparalleled Luxury in the Heart of the City</p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button onclick="scrollToRooms()" class="px-8 py-3 gold-bg text-black rounded-lg font-bold text-lg hover:opacity-90 transition-opacity">
+        <i class="fas fa-eye mr-2"></i>View Rooms
+      </button>
+      <button id="openBookingBtn2" class="px-8 py-3 bg-white text-black rounded-lg font-bold text-lg hover:bg-gray-200 transition-colors">
+        <i class="fas fa-concierge-bell mr-2"></i>Book Your Stay
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="py-16 bg-gray-950">
+  <div class="container mx-auto px-4">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Why Choose LuxuryStay?</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-spa text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">Luxury Spa</h3>
+        <p class="text-gray-400">Relax and rejuvenate with our world-class spa treatments and wellness services.</p>
+      </div>
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-utensils text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">Gourmet Dining</h3>
+        <p class="text-gray-400">Experience culinary excellence with our award-winning restaurants and chefs.</p>
+      </div>
+      <div class="text-center p-6">
+        <div class="bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 gold-border border-2">
+          <i class="fas fa-concierge-bell text-2xl gold-text"></i>
+        </div>
+        <h3 class="text-xl font-bold gold-text mb-2">24/7 Concierge</h3>
+        <p class="text-gray-400">Our dedicated staff is available around the clock to cater to your every need.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROOMS SECTION -->
+<section id="rooms" class="py-16 px-4">
+  <div class="container mx-auto">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Our Premium Rooms & Suites</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+      <!-- Room 1: Standard -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">$100/night</span>
+        <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Standard Room">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Standard</h3>
+          <p class="text-gray-400 mb-4">Comfortable room with modern amenities and city view.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Standard', 100)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center text-sm">
+              <i class="fas fa-calendar-check mr-1"></i>Book
+            </button>
+            <button onclick="showDetails('Standard Room','• Queen size bed\\n• City view\\n• Minibar\\n• Free Wi-Fi\\n• 42 inch Smart TV\\n• Work desk')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center text-sm">
+              <i class="fas fa-info-circle mr-1"></i>Info
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Room 2: Deluxe Room -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">$150/night</span>
+        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Deluxe Room">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Deluxe Room</h3>
+          <p class="text-gray-400 mb-4">Luxury bedding, ocean view, and complimentary breakfast.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Deluxe Room', 150)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center text-sm">
+              <i class="fas fa-calendar-check mr-1"></i>Book
+            </button>
+            <button onclick="showDetails('Deluxe Room','• King size bed\\n• Ocean view balcony\\n• Minibar\\n• Free Wi-Fi\\n• Complimentary breakfast\\n• 55 inch Smart TV')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center text-sm">
+              <i class="fas fa-info-circle mr-1"></i>Info
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room 3: Suite -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">$350/night</span>
+        <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Executive Suite">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Suite</h3>
+          <p class="text-gray-400 mb-4">Private balcony, king-size bed, 24/7 room service.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Suite', 350)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center text-sm">
+              <i class="fas fa-calendar-check mr-1"></i>Book
+            </button>
+            <button onclick="showDetails('Executive Suite','• Private lounge area\\n• Panoramic city views\\n• Personal concierge\\n• Luxury bathroom\\n• 24/7 room service\\n• Separate living area')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center text-sm">
+              <i class="fas fa-info-circle mr-1"></i>Info
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room 4: Presidential Suite -->
+      <div class="room-card relative bg-gray-900 rounded-xl overflow-hidden border gold-border">
+        <span class="ribbon">$500/night</span>
+        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+             class="w-full h-48 object-cover" alt="Presidential Suite">
+        <div class="p-6">
+          <h3 class="text-2xl font-bold gold-text mb-2">Presidential Suite</h3>
+          <p class="text-gray-400 mb-4">Exclusive lounge, premium bar, luxury bathroom.</p>
+          <div class="flex gap-2">
+            <button onclick="openBookingModal('Presidential Suite', 500)" class="flex-1 bg-gray-800 py-2 rounded hover:bg-gray-700 transition-colors flex items-center justify-center text-sm">
+              <i class="fas fa-calendar-check mr-1"></i>Book
+            </button>
+            <button onclick="showDetails('Presidential Suite','• Private jacuzzi\\n• Dedicated butler service\\n• Oceanfront balcony\\n• Premium bar\\n• Exclusive lounge\\n• Private dining area')" 
+                    class="flex-1 gold-bg text-black py-2 rounded hover:opacity-90 transition-opacity flex items-center justify-center text-sm">
+              <i class="fas fa-info-circle mr-1"></i>Info
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AMENITIES SECTION -->
+<section class="py-16 bg-gray-950">
+  <div class="container mx-auto px-4">
+    <h2 class="text-4xl font-bold mb-12 gold-text text-center">Hotel Amenities</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-swimming-pool text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Infinity Pool</h3>
+        <p class="text-gray-400">Stunning rooftop pool with panoramic city views</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-dumbbell text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Fitness Center</h3>
+        <p class="text-gray-400">State-of-the-art gym with personal trainers</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-wifi text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">High-Speed WiFi</h3>
+        <p class="text-gray-400">Complimentary high-speed internet throughout</p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-xl border gold-border text-center">
+        <i class="fas fa-parking text-4xl gold-text mb-4"></i>
+        <h3 class="text-xl font-bold gold-text mb-2">Valet Parking</h3>
+        <p class="text-gray-400">Complimentary valet parking for all guests</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN LOGIN MODAL -->
+<div id="adminLoginModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 admin-login-modal">
+  <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-md border-2 gold-border fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl gold-text font-bold flex items-center">
+        <i class="fas fa-user-shield mr-2"></i>Admin Login
+      </h3>
+      <button onclick="closeAdminLoginModal()" class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Username</label>
+        <input type="text" id="adminUsername" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter admin username">
+      </div>
+      
+      <div>
+        <label class="block text-gray-400 mb-2">Password</label>
+        <input type="password" id="adminPassword" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter admin password">
+      </div>
+      
+      <div class="flex items-center">
+        <input type="checkbox" id="rememberMe" class="mr-2">
+        <label for="rememberMe" class="text-gray-400 text-sm">Remember me</label>
+      </div>
+      
+      <div id="adminLoginError" class="text-red-500 text-center hidden">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        <span id="adminLoginErrorText">Invalid credentials</span>
+      </div>
+      
+      <div class="flex gap-4">
+        <button onclick="submitAdminLogin()" id="submitAdminLoginBtn" class="flex-1 py-4 gold-bg text-black rounded-lg font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center">
+          <i class="fas fa-sign-in-alt mr-2"></i>Login
+        </button>
+        <button onclick="closeAdminLoginModal()" class="flex-1 py-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+          Cancel
+        </button>
+      </div>
+      
+      <div class="text-center text-gray-500 text-sm">
+        <p>Default credentials: admin / admin123</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 booking-modal">
+  <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-2xl border-2 gold-border max-h-[90vh] overflow-y-auto fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl gold-text font-bold flex items-center">
+        <i class="fas fa-calendar-plus mr-2"></i>Book Your Stay
+      </h3>
+      <button onclick="closeBookingModal()" class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Full Name *</label>
+        <input type="text" id="customer_name" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter your full name">
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Email Address *</label>
+        <input type="email" id="customer_email" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" placeholder="Enter your email">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Room Type *</label>
+        <select id="room_type" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="updateBookingPrice()">
+          <option value="Standard" data-price="100">Standard - $100/night</option>
+          <option value="Deluxe Room" data-price="150">Deluxe Room - $150/night</option>
+          <option value="Suite" data-price="350">Suite - $350/night</option>
+          <option value="Presidential Suite" data-price="500">Presidential Suite - $500/night</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Rate Per Night</label>
+        <div class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white">
+          <span id="ratePerNight" class="gold-text font-bold text-lg">$100</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Check-in Date *</label>
+        <input type="date" id="check_in_date" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Check-out Date *</label>
+        <input type="date" id="check_out_date" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block text-gray-400 mb-2">Number of Guests *</label>
+        <select id="guest_number" class="w-full p-4 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="calculateTotal()">
+          <option value="1">1 Guest</option>
+          <option value="2" selected>2 Guests</option>
+          <option value="3">3 Guests</option>
+          <option value="4">4 Guests</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-2">Guest Satisfaction</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button class="satisfaction-option bg-gray-800 p-2 rounded-lg border border-gray-700 text-center transition-all" data-rating="Very Satisfied" onclick="selectSatisfaction(this)">
+            <div class="text-yellow-400 text-lg">😄</div>
+            <div class="text-xs mt-1">Very Satisfied</div>
+          </button>
+          <button class="satisfaction-option bg-gray-800 p-2 rounded-lg border border-gray-700 text-center transition-all" data-rating="Excellent" onclick="selectSatisfaction(this)">
+            <div class="text-yellow-400 text-lg">😊</div>
+            <div class="text-xs mt-1">Excellent</div>
+          </button>
+          <button class="satisfaction-option bg-gray-800 p-2 rounded-lg border border-gray-700 text-center transition-all" data-rating="Good" onclick="selectSatisfaction(this)">
+            <div class="text-yellow-400 text-lg">🙂</div>
+            <div class="text-xs mt-1">Good</div>
+          </button>
+          <button class="satisfaction-option bg-gray-800 p-2 rounded-lg border border-gray-700 text-center transition-all" data-rating="Average" onclick="selectSatisfaction(this)">
+            <div class="text-yellow-400 text-lg">😐</div>
+            <div class="text-xs mt-1">Average</div>
+          </button>
+          <button class="satisfaction-option bg-gray-800 p-2 rounded-lg border border-gray-700 text-center transition-all" data-rating="Poor" onclick="selectSatisfaction(this)">
+            <div class="text-yellow-400 text-lg">😞</div>
+            <div class="text-xs mt-1">Poor</div>
+          </button>
+        </div>
+        <input type="hidden" id="guest_satisfaction" value="">
+      </div>
+    </div>
+
+    <!-- Price Summary -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-6">
+      <h4 class="text-lg gold-text font-bold mb-4 flex items-center">
+        <i class="fas fa-receipt mr-2"></i>Booking Summary
+      </h4>
+      <div class="space-y-2">
+        <div class="flex justify-between">
+          <span>Room Price per night:</span>
+          <span id="roomPrice" class="gold-text">$100</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Number of Nights:</span>
+          <span id="spend_nights">0</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Number of Guests:</span>
+          <span id="guestsCount">2</span>
+        </div>
+        <div class="border-t border-gray-600 pt-2 mt-2">
+          <div class="flex justify-between text-lg font-bold">
+            <span>Total Amount:</span>
+            <span id="total_price" class="gold-text">$0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <button onclick="submitBooking()" id="submitBookingBtn" class="flex-1 py-4 gold-bg text-black rounded-lg font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center">
+        <i class="fas fa-check-circle mr-2"></i>Confirm Booking
+      </button>
+      <button onclick="closeBookingModal()" class="flex-1 py-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+        Cancel
+      </button>
+    </div>
+
+    <p id="bookingError" class="text-red-500 text-center mt-4 hidden"></p>
+  </div>
+</div>
+
+<!-- BOOKINGS PANEL -->
+<div id="bookingsPanel" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 booking-modal">
+  <div class="bg-gray-900 p-8 rounded-2xl w-full max-w-6xl border-2 gold-border max-h-[90vh] overflow-y-auto fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-2xl gold-text font-bold flex items-center">
+        <i class="fas fa-list mr-2"></i>All Bookings
+      </h3>
+      <button onclick="closeBookingsPanel()" class="text-gray-400 hover:text-white text-2xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Bookings Stats -->
+    <div class="grid md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold gold-text text-center" id="totalBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Total Bookings</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-green-400 text-center" id="confirmedBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Confirmed</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-blue-400 text-center" id="pendingBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Pending</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border gold-border">
+        <div class="text-2xl font-bold text-red-400 text-center" id="cancelledBookingsCount">0</div>
+        <div class="text-gray-400 text-center text-sm">Cancelled</div>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-gray-800 rounded-lg p-4 mb-6">
+      <div class="flex gap-4">
+        <input type="text" id="searchBookings" placeholder="Search by name or email..." class="flex-1 p-3 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" oninput="filterBookings()">
+        <select id="filterStatus" class="p-3 rounded-lg bg-black border border-gray-700 text-white focus:border-gold-500 focus:outline-none" onchange="filterBookings()">
+          <option value="all">All Status</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="pending">Pending</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <button onclick="refreshBookings()" class="px-4 py-2 gold-bg text-black rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center">
+          <i class="fas fa-sync-alt mr-2"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="bg-gray-800 rounded-lg border gold-border overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-750">
+            <tr>
+              <th class="p-4 text-left text-gray-400">Guest</th>
+              <th class="p-4 text-left text-gray-400">Room Type</th>
+              <th class="p-4 text-left text-gray-400">Check-in</th>
+              <th class="p-4 text-left text-gray-400">Check-out</th>
+              <th class="p-4 text-left text-gray-400">Amount</th>
+              <th class="p-4 text-left text-gray-400">Satisfaction</th>
+              <th class="p-4 text-left text-gray-400">Status</th>
+              <th class="p-4 text-left text-gray-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody">
+            <!-- Bookings will be populated here -->
+          </tbody>
+        </table>
+      </div>
+      <div id="noBookingsMessage" class="text-center py-8 text-gray-500">
+        <i class="fas fa-calendar-times text-4xl mb-4"></i>
+        <p>No bookings found</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI CHATBOT CONTAINER -->
+<div id="chatbot-container"></div>
+
+<!-- FOOTER -->
+<footer class="bg-gray-950 py-12 border-t border-gray-800">
+  <div class="container mx-auto px-4">
+    <div class="grid md:grid-cols-4 gap-8">
+      <div>
+        <h3 class="text-xl font-bold gold-text mb-4">LuxuryStay</h3>
+        <p class="text-gray-400">Experience unparalleled luxury and exceptional service at our premium hotel.</p>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Contact Info</h4>
+        <p class="text-gray-400 mb-2"><i class="fas fa-map-marker-alt gold-text mr-2"></i> 123 Luxury Avenue, Colombo</p>
+        <p class="text-gray-400 mb-2"><i class="fas fa-phone gold-text mr-2"></i> 045 2050973</p>
+        <p class="text-gray-400"><i class="fas fa-envelope gold-text mr-2"></i> info@luxurystay.com</p>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Quick Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
+          <li><a href="#rooms" class="text-gray-400 hover:text-white transition-colors">Rooms & Suites</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Amenities</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold gold-text mb-4">Connect With Us</h4>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+      <p>&copy; 2024 LuxuryStay. All rights reserved. | Powered by AI Concierge</p>
+    </div>
+  </div>
+</footer>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyDN9-FOx1bMMTmGaHpsvt7MO0eZbJF0mVw",
+    authDomain: "luxurystay-f4d48.firebaseapp.com",
+    databaseURL: "https://luxurystay-f4d48-default-rtdb.firebaseio.com",
+    projectId: "luxurystay-f4d48",
+    storageBucket: "luxurystay-f4d48.firebasestorage.app",
+    messagingSenderId: "957241383544",
+    appId: "1:957241383544:web:85a53a3cadc0f860a92b8d",
+    measurementId: "G-LCZ7Q8EP4X"
+  };
+
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let database = null;
+  let allBookings = [];
+
+  // ============================================
+  // ADMIN CREDENTIALS
+  // ============================================
+  const ADMIN_CREDENTIALS = {
+    username: "admin",
+    password: "admin123"
+  };
+
+  // ============================================
+  // FIREBASE INITIALIZATION WITH DEBUGGING
+  // ============================================
+  function initFirebase() {
+    console.log("🟡 Starting Firebase initialization...");
+    
+    try {
+      if (typeof firebase === 'undefined') {
+        console.error("🔴 Firebase SDK not loaded!");
+        database = null;
+        return;
+      }
+
+      console.log("🟡 Firebase SDK found, initializing...");
+      firebase.initializeApp(firebaseConfig);
+      
+      // Initialize authentication and database
+      const auth = firebase.auth();
+      database = firebase.database();
+      
+      console.log("🟡 Attempting anonymous authentication...");
+      
+      // Sign in anonymously to enable write operations
+      auth.signInAnonymously()
+        .then((userCredential) => {
+          console.log("🟢 Anonymous authentication successful");
+          console.log("🟢 User ID:", userCredential.user.uid);
+          console.log("🟢 Firebase initialized successfully");
+          
+          // Test database connection
+          testDatabaseConnection();
+        })
+        .catch((error) => {
+          console.error("🔴 Anonymous auth failed:", error);
+          console.log("🟠 Error details:", error.code, error.message);
+          // Fallback to demo mode if authentication fails
+          database = null;
+          console.log("🟠 Falling back to demo mode");
+        });
+    } catch (error) {
+      console.error("🔴 Error initializing Firebase:", error);
+      database = null;
+    }
+  }
+
+  // Test function to check database connection
+  function testDatabaseConnection() {
+    if (!database) {
+      console.log("🔴 Database not available for testing");
+      return;
+    }
+    
+    console.log("🟡 Testing database connection...");
+    
+    // Try to write a test record
+    const testRef = database.ref('connection_test/' + Date.now());
+    testRef.set({
+      timestamp: new Date().toISOString(),
+      test: "connection_test"
+    })
+    .then(() => {
+      console.log("🟢 Database write test: SUCCESS");
+      // Clean up test record
+      testRef.remove();
+    })
+    .catch((error) => {
+      console.error("🔴 Database write test: FAILED", error);
+      console.log("🔴 Error details:", error.code, error.message);
+    });
+  }
+
+  // ============================================
+  // CHATBOT CONFIGURATION
+  // ============================================
+  const CHATBOT_CONFIG = {
+    webhookUrl: 'https://malshansenevirathna.app.n8n.cloud/webhook/hotel-chatbot-fixed',
+    bearerToken: 'Bearer luxuryhotel_ro301jtel7ih7xilsda2',
+    botName: 'LuxuryStay AI Concierge',
+    welcomeMessage: '✨ Welcome to LuxuryStay! I\'m your AI concierge. I can help you with:\n\n🏨 Room information & availability\n📅 Booking assistance\n🍽️ Restaurant recommendations\n🏊 Amenities & services\n📍 Local attractions\n\nHow may I assist you today?',
+    maxRetries: 2,
+    timeout: 45000
+  };
+
+  // ============================================
+  // HOTEL CHATBOT CLASS
+  // ============================================
+  class LuxuryStayChatbot {
+    constructor() {
+      this.isOpen = false;
+      this.messages = [
+        {
+          type: 'bot',
+          text: CHATBOT_CONFIG.welcomeMessage,
+          time: this.getTime()
+        }
+      ];
+      this.isLoading = false;
+      this.retryCount = 0;
+      this.init();
+    }
+
+    init() {
+      this.loadMessages();
+      this.render();
+      this.attachEventListeners();
+    }
+
+    getTime() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    getSessionId() {
+      let sessionId = localStorage.getItem('chatSessionId');
+      if (!sessionId) {
+        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('chatSessionId', sessionId);
+      }
+      return sessionId;
+    }
+
+    saveMessages() {
+      try {
+        localStorage.setItem('chatMessages', JSON.stringify(this.messages));
+      } catch (e) {
+        console.warn('Could not save messages:', e);
+      }
+    }
+
+    loadMessages() {
+      try {
+        const saved = localStorage.getItem('chatMessages');
+        if (saved) {
+          this.messages = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.warn('Could not load messages:', e);
+      }
+    }
+
+    clearHistory() {
+      if (confirm('Clear chat history?')) {
+        this.messages = [
+          {
+            type: 'bot',
+            text: CHATBOT_CONFIG.welcomeMessage,
+            time: this.getTime()
+          }
+        ];
+        this.saveMessages();
+        this.render();
+        this.attachEventListeners();
+      }
+    }
+
+    render() {
+      const container = document.getElementById('chatbot-container');
+      container.innerHTML = `
+        <div class="fixed bottom-6 right-6 z-50">
+          ${!this.isOpen ? this.renderButton() : this.renderChatWindow()}
+        </div>
+      `;
+    }
+
+    renderButton() {
+      return `
+        <button id="chat-open-btn" class="chat-gold-gradient text-black rounded-full px-6 py-4 shadow-lg transition-all duration-300 hover:scale-110 flex items-center gap-3 font-bold text-lg">
+          <i class="fas fa-robot text-2xl"></i>
+          <span>AI Concierge</span>
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        </button>
+      `;
+    }
+
+    renderChatWindow() {
+      const messageCount = this.messages.length;
+      return `
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-96 flex flex-col overflow-hidden chat-appear border-2 gold-border" style="height: 600px;">
+          <!-- Header -->
+          <div class="chat-gold-gradient text-black p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                <i class="fas fa-robot text-2xl gold-text"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg">${CHATBOT_CONFIG.botName}</h3>
+                <p class="text-xs flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  Online • AI-Powered
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              ${messageCount > 1 ? `
+                <button id="chat-clear-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Clear history">
+                  <i class="fas fa-trash text-lg"></i>
+                </button>
+              ` : ''}
+              <button id="chat-minimize-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Minimize">
+                <i class="fas fa-minus text-lg"></i>
+              </button>
+              <button id="chat-close-btn" class="hover:bg-black hover:bg-opacity-20 rounded-full p-2 transition-colors" title="Close">
+                <i class="fas fa-times text-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          ${!this.isLoading && this.messages.length === 1 ? `
+            <div class="p-3 bg-gray-800 border-b border-gray-700">
+              <p class="text-xs text-gray-400 mb-2 flex items-center gap-2">
+                <i class="fas fa-magic"></i> Quick questions:
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="What are your room rates?">
+                  💰 Room Rates
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="What amenities do you offer?">
+                  🏊 Amenities
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="How do I check availability?">
+                  📅 Availability
+                </button>
+                <button class="quick-action text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-full border gold-border transition-colors" data-message="Tell me about your spa services">
+                  💆 Spa Services
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Messages -->
+          <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-black">
+            ${this.messages.map(msg => this.renderMessage(msg)).join('')}
+            ${this.isLoading ? this.renderLoader() : ''}
+          </div>
+
+          <!-- Input -->
+          <div class="border-t gold-border p-4 bg-gray-900">
+            <div class="flex gap-2 items-end">
+              <textarea 
+                id="chat-input" 
+                placeholder="Ask me anything about LuxuryStay..." 
+                class="flex-1 resize-none border gold-border rounded-xl px-4 py-3 bg-black text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm max-h-32"
+                rows="1"
+                ${this.isLoading ? 'disabled' : ''}
+              ></textarea>
+              <button 
+                id="chat-send-btn" 
+                class="chat-gold-gradient text-black rounded-xl p-3 transition-all hover:opacity-90 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                ${this.isLoading ? 'disabled' : ''}
+                title="Send message"
+              >
+                <i class="fas fa-paper-plane text-lg"></i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center flex items-center justify-center gap-2">
+              <i class="fas fa-shield-alt"></i>
+              Powered by AI • Available 24/7 • Press Enter to send
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    renderMessage(msg) {
+      const isUser = msg.type === 'user';
+      const isError = msg.type === 'error';
+      
+      return `
+        <div class="flex ${isUser ? 'justify-end' : 'justify-start'} fade-in">
+          ${!isUser ? `
+            <div class="w-8 h-8 rounded-full chat-gold-gradient flex items-center justify-center mr-2 flex-shrink-0">
+              <i class="fas fa-robot text-black"></i>
+            </div>
+          ` : ''}
+          <div class="max-w-[75%] rounded-2xl px-4 py-3 ${
+            isError ? 'bg-red-900 text-red-100 border border-red-700' :
+            isUser ? 'chat-gold-gradient text-black rounded-br-none font-medium' : 
+            'bg-gray-800 text-white rounded-bl-none border gold-border'
+          }">
+            <p class="text-sm whitespace-pre-wrap break-words leading-relaxed">${this.escapeHtml(msg.text)}</p>
+            <span class="text-xs mt-1 block ${
+              isError ? 'text-red-300' :
+              isUser ? 'text-black text-opacity-70' : 
+              'text-gray-400'
+            }">
+              ${msg.time}
+            </span>
+          </div>
+          ${isUser ? `
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-2 flex-shrink-0">
+              <i class="fas fa-user gold-text"></i>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    renderLoader() {
+      return `
+        <div class="flex justify-start fade-in">
+          <div class="w-8 h-8 rounded-full chat-gold-gradient flex items-center justify-center mr-2">
+            <i class="fas fa-robot text-black"></i>
+          </div>
+          <div class="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border gold-border">
+            <div class="flex gap-1 items-center">
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+              <div class="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+              <span class="text-xs text-gray-400 ml-2 typing-indicator">AI is thinking...</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    attachEventListeners() {
+      const openBtn = document.getElementById('chat-open-btn');
+      const closeBtn = document.getElementById('chat-close-btn');
+      const minimizeBtn = document.getElementById('chat-minimize-btn');
+      const clearBtn = document.getElementById('chat-clear-btn');
+      const sendBtn = document.getElementById('chat-send-btn');
+      const input = document.getElementById('chat-input');
+      const quickActions = document.querySelectorAll('.quick-action');
+
+      if (openBtn) {
+        openBtn.addEventListener('click', () => {
+          this.isOpen = true;
+          this.render();
+          this.attachEventListeners();
+          setTimeout(() => this.scrollToBottom(), 100);
+        });
+      }
+
+      if (closeBtn || minimizeBtn) {
+        const closeHandler = () => {
+          this.isOpen = false;
+          this.render();
+          this.attachEventListeners();
+        };
+        closeBtn?.addEventListener('click', closeHandler);
+        minimizeBtn?.addEventListener('click', closeHandler);
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => this.clearHistory());
+      }
+
+      if (sendBtn) {
+        sendBtn.addEventListener('click', () => this.sendMessage());
+      }
+
+      if (input) {
+        input.addEventListener('input', (e) => {
+          e.target.style.height = 'auto';
+          e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
+        });
+
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+          }
+        });
+
+        input.focus();
+      }
+
+      quickActions.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const message = btn.getAttribute('data-message');
+          if (input) {
+            input.value = message;
+            this.sendMessage();
+          }
+        });
+      });
+    }
+
+    async sendMessage(retryMessage = null) {
+      const input = document.getElementById('chat-input');
+      const message = retryMessage || (input ? input.value.trim() : '');
+      
+      if (!message || this.isLoading) return;
+
+      if (!retryMessage) {
+        this.messages.push({
+          type: 'user',
+          text: message,
+          time: this.getTime()
+        });
+      }
+
+      if (input) input.value = '';
+      this.isLoading = true;
+      this.saveMessages();
+      this.render();
+      this.attachEventListeners();
+
+      try {
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (CHATBOT_CONFIG.bearerToken) {
+          headers['Authorization'] = CHATBOT_CONFIG.bearerToken;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CHATBOT_CONFIG.timeout);
+
+        const response = await fetch(CHATBOT_CONFIG.webhookUrl, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            message: message,
+            timestamp: new Date().toISOString(),
+            sessionId: this.getSessionId(),
+            conversationHistory: this.messages.slice(-10),
+            hotelContext: {
+              name: 'LuxuryStay',
+              rooms: ['Standard', 'Deluxe Room', 'Suite', 'Presidential Suite'],
+              prices: { 'Standard': 100, 'Deluxe Room': 150, 'Suite': 350, 'Presidential Suite': 500 },
+              amenities: ['Infinity Pool', 'Fitness Center', 'Spa', 'Restaurant', 'WiFi', 'Valet Parking']
+            }
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const botResponse = data.response || data.message || data.output || data.text ||
+                           'I received your message but couldn\'t generate a proper response. Please try rephrasing your question.';
+        
+        this.messages.push({
+          type: 'bot',
+          text: botResponse,
+          time: this.getTime()
+        });
+
+        this.retryCount = 0;
+
+      } catch (error) {
+        console.error('Chatbot Error:', error);
+        
+        let errorMessage = '😕 Sorry, I\'m having trouble connecting. ';
+        
+        if (error.name === 'AbortError') {
+          errorMessage += 'The request timed out. Please try again.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage += 'Please check your internet connection.';
+        } else if (error.message.includes('401')) {
+          errorMessage += 'Authentication failed. Please contact support.';
+        } else {
+          errorMessage += 'Please try again in a moment.';
+        }
+
+        if (this.retryCount < CHATBOT_CONFIG.maxRetries) {
+          this.retryCount++;
+          errorMessage += ` (Retrying ${this.retryCount}/${CHATBOT_CONFIG.maxRetries}...)`;
+          
+          this.messages.push({
+            type: 'error',
+            text: errorMessage,
+            time: this.getTime()
+          });
+          
+          this.isLoading = false;
+          this.saveMessages();
+          this.render();
+          this.attachEventListeners();
+          this.scrollToBottom();
+
+          setTimeout(() => this.sendMessage(message), 2000);
+          return;
+        }
+
+        this.messages.push({
+          type: 'error',
+          text: errorMessage,
+          time: this.getTime()
+        });
+        
+        this.retryCount = 0;
+      } finally {
+        this.isLoading = false;
+        this.saveMessages();
+        this.render();
+        this.attachEventListeners();
+        this.scrollToBottom();
+      }
+    }
+
+    scrollToBottom() {
+      const messagesDiv = document.getElementById('chat-messages');
+      if (messagesDiv) {
+        setTimeout(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }, 100);
+      }
+    }
+  }
+
+  // ============================================
+  // ADMIN LOGIN FUNCTIONS
+  // ============================================
+  function openAdminLoginModal() {
+    const modal = document.getElementById('adminLoginModal');
+    modal.classList.remove('hidden');
+    
+    // Clear any previous errors
+    const errorElement = document.getElementById('adminLoginError');
+    errorElement.classList.add('hidden');
+    
+    // Focus on username field
+    document.getElementById('adminUsername').focus();
+  }
+
+  function closeAdminLoginModal() {
+    document.getElementById('adminLoginModal').classList.add('hidden');
+    
+    // Clear form fields
+    document.getElementById('adminUsername').value = '';
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('rememberMe').checked = false;
+  }
+
+  function submitAdminLogin() {
+    const username = document.getElementById('adminUsername').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+    const errorElement = document.getElementById('adminLoginError');
+    const submitBtn = document.getElementById('submitAdminLoginBtn');
+    
+    // Reset error state
+    errorElement.classList.add('hidden');
+    
+    // Validate inputs
+    if (!username || !password) {
+      showAdminLoginError('Please enter both username and password');
+      return;
+    }
+    
+    // Show loading state
+    submitBtn.innerHTML = '<div class="loading"></div> Authenticating...';
+    submitBtn.disabled = true;
+    
+    // Simulate authentication delay
+    setTimeout(() => {
+      // Check credentials
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        // Successful login
+        console.log('🟢 Admin login successful');
+        
+        // Store login state if remember me is checked
+        if (rememberMe) {
+          localStorage.setItem('adminLoggedIn', 'true');
+        } else {
+          sessionStorage.setItem('adminLoggedIn', 'true');
+        }
+        
+        // Close modal
+        closeAdminLoginModal();
+        
+        // Open analytics dashboard in new tab
+        window.open('https://vimukthi1239.github.io/hotel-analytics-dashboard-new/', '_blank');
+        
+        // Show success message
+        alert('✅ Admin login successful! Opening analytics dashboard...');
+      } else {
+        // Failed login
+        console.log('🔴 Admin login failed');
+        showAdminLoginError('Invalid username or password');
+        
+        // Add shake animation to modal
+        const modal = document.getElementById('adminLoginModal');
+        modal.classList.add('shake');
+        setTimeout(() => {
+          modal.classList.remove('shake');
+        }, 500);
+      }
+      
+      // Reset button state
+      submitBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Login';
+      submitBtn.disabled = false;
+    }, 1500);
+  }
+
+  function showAdminLoginError(message) {
+    const errorElement = document.getElementById('adminLoginError');
+    const errorText = document.getElementById('adminLoginErrorText');
+    
+    errorText.textContent = message;
+    errorElement.classList.remove('hidden');
+  }
+
+  // ============================================
+  // UTILITY FUNCTIONS
+  // ============================================
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return 'Invalid Date';
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showDetails(title, description) {
+    alert(`${title}\n\n${description}`);
+  }
+
+  function scrollToRooms() {
+    document.getElementById('rooms').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function getStatusClass(status) {
+    const normalizedStatus = (status || 'confirmed').toLowerCase();
+    switch(normalizedStatus) {
+      case 'confirmed': return 'bg-green-600 text-white';
+      case 'pending': return 'bg-yellow-600 text-white';
+      case 'cancelled': return 'bg-red-600 text-white';
+      default: return 'bg-gray-600 text-white';
+    }
+  }
+
+  // ============================================
+  // SATISFACTION RATING FUNCTIONS
+  // ============================================
+  function selectSatisfaction(element) {
+    // Remove selected class from all options
+    document.querySelectorAll('.satisfaction-option').forEach(option => {
+      option.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    element.classList.add('selected');
+    
+    // Update hidden input value
+    document.getElementById('guest_satisfaction').value = element.getAttribute('data-rating');
+  }
+
+  // ============================================
+  // BOOKING MODAL FUNCTIONS
+  // ============================================
+  function openBookingModal(roomType = null, price = null) {
+    const modal = document.getElementById('bookingModal');
+    modal.classList.remove('hidden');
+    
+    if (roomType && price) {
+      document.getElementById('room_type').value = roomType;
+      updateBookingPrice();
+    }
+    
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayFormatted = today.toISOString().split('T')[0];
+    const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    
+    const checkInInput = document.getElementById('check_in_date');
+    const checkOutInput = document.getElementById('check_out_date');
+    
+    if (checkInInput) {
+      checkInInput.min = todayFormatted;
+      checkInInput.value = todayFormatted;
+    }
+    
+    if (checkOutInput) {
+      checkOutInput.min = tomorrowFormatted;
+      checkOutInput.value = tomorrowFormatted;
+    }
+    
+    calculateTotal();
+  }
+
+  function closeBookingModal() {
+    document.getElementById('bookingModal').classList.add('hidden');
+    const errorElement = document.getElementById('bookingError');
+    if (errorElement) {
+      errorElement.classList.add('hidden');
+    }
+  }
+
+  function updateBookingPrice() {
+    const roomSelect = document.getElementById('room_type');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const price = selectedOption.getAttribute('data-price');
+    document.getElementById('roomPrice').textContent = `$${parseInt(price).toLocaleString()}`;
+    document.getElementById('ratePerNight').textContent = `$${price}`;
+    calculateTotal();
+  }
+
+  function calculateTotal() {
+    const roomSelect = document.getElementById('room_type');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const room_per_night = parseInt(selectedOption.getAttribute('data-price'));
+    
+    const checkInInput = document.getElementById('check_in_date');
+    const checkOutInput = document.getElementById('check_out_date');
+    
+    if (!checkInInput || !checkOutInput) {
+      console.error('Date inputs not found');
+      return;
+    }
+    
+    const checkIn = new Date(checkInInput.value);
+    const checkOut = new Date(checkOutInput.value);
+    
+    if (checkIn && checkOut && checkOut > checkIn) {
+      const spend_nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+      const guest_number = parseInt(document.getElementById('guest_number').value);
+      
+      document.getElementById('spend_nights').textContent = spend_nights;
+      document.getElementById('guestsCount').textContent = guest_number;
+      
+      const total_price = room_per_night * spend_nights;
+      document.getElementById('total_price').textContent = `$${total_price.toLocaleString()}`;
+    } else {
+      document.getElementById('spend_nights').textContent = '0';
+      document.getElementById('total_price').textContent = '$0';
+    }
+  }
+
+  // ============================================
+  // ENHANCED BOOKING SUBMISSION WITH DEBUGGING
+  // ============================================
+  function submitBooking() {
+    console.log("🟡 submitBooking() called");
+    
+    const customer_name = document.getElementById('customer_name').value.trim();
+    const customer_email = document.getElementById('customer_email').value.trim();
+    const room_type = document.getElementById('room_type').value;
+    const check_in_date = document.getElementById('check_in_date').value;
+    const check_out_date = document.getElementById('check_out_date').value;
+    const guest_number = document.getElementById('guest_number').value;
+    const guest_satisfaction = document.getElementById('guest_satisfaction').value;
+    
+    console.log("🟡 Form data:", {
+      customer_name, customer_email, room_type, check_in_date, check_out_date, 
+      guest_number, guest_satisfaction
+    });
+
+    // Validation
+    if (!customer_name || !customer_email || !check_in_date || !check_out_date) {
+      console.log("🔴 Validation failed: Missing required fields");
+      const errorElement = document.getElementById('bookingError');
+      errorElement.textContent = 'Please fill in all required fields.';
+      errorElement.classList.remove('hidden');
+      return;
+    }
+    
+    if (new Date(check_out_date) <= new Date(check_in_date)) {
+      console.log("🔴 Validation failed: Invalid dates");
+      const errorElement = document.getElementById('bookingError');
+      errorElement.textContent = 'Check-out date must be after check-in date.';
+      errorElement.classList.remove('hidden');
+      return;
+    }
+    
+    // Calculate booking details
+    const roomSelect = document.getElementById('room_type');
+    const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+    const room_per_night = parseInt(selectedOption.getAttribute('data-price'));
+    const checkIn = new Date(check_in_date);
+    const checkOut = new Date(check_out_date);
+    const spend_nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const total_price = room_per_night * spend_nights;
+    
+    const booking = {
+      id: Date.now().toString(),
+      customer_name: customer_name,
+      customer_email: customer_email,
+      room_type: room_type,
+      check_in_date: check_in_date,
+      check_out_date: check_out_date,
+      guest_number: parseInt(guest_number),
+      guest_satisfaction: guest_satisfaction,
+      total_price: total_price,
+      status: 'confirmed',
+      booking_timestamp: new Date().toISOString(),
+      spend_nights: spend_nights,
+      room_per_night: room_per_night
+    };
+    
+    console.log("🟡 Booking object prepared:", booking);
+    console.log("🟡 Database available:", database ? "YES" : "NO");
+    
+    const submitBtn = document.getElementById('submitBookingBtn');
+    const errorElement = document.getElementById('bookingError');
+    
+    submitBtn.innerHTML = '<div class="loading"></div> Processing...';
+    submitBtn.disabled = true;
+    errorElement.classList.add('hidden');
+    
+    if (database) {
+      console.log("🟡 Attempting to save to Firebase...");
+      
+      database.ref('bookings/' + booking.id).set(booking)
+        .then(() => {
+          console.log("🟢 Booking successfully saved to Firebase");
+          console.log("🟢 Booking ID:", booking.id);
+          showSuccessMessage(customer_name, room_type, spend_nights, total_price);
+        })
+        .catch((error) => {
+          console.error("🔴 Error saving booking to Firebase:", error);
+          console.log("🔴 Error code:", error.code);
+          console.log("🔴 Error message:", error.message);
+          
+          // Show detailed error to user
+          errorElement.textContent = `Failed to save booking: ${error.message}. Using demo mode.`;
+          errorElement.classList.remove('hidden');
+          
+          // Fallback to demo mode
+          showSuccessMessage(customer_name, room_type, spend_nights, total_price);
+        })
+        .finally(() => {
+          resetButtonState(submitBtn);
+        });
+    } else {
+      console.log("🟡 Database not available, using demo mode");
+      showSuccessMessage(customer_name, room_type, spend_nights, total_price);
+      resetButtonState(submitBtn);
+    }
+  }
+
+  function showSuccessMessage(customer_name, room_type, spend_nights, total_price) {
+    alert(`✅ Booking Confirmed!\n\nThank you ${customer_name}!\n\nYour ${room_type} booking for ${spend_nights} nights has been confirmed.\n\nTotal: $${total_price.toLocaleString()}\n\nWe look forward to welcoming you to LuxuryStay!`);
+    closeBookingModal();
+    resetBookingForm();
+  }
+
+  function resetButtonState(submitBtn) {
+    submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirm Booking';
+    submitBtn.disabled = false;
+  }
+
+  function resetBookingForm() {
+    document.getElementById('customer_name').value = '';
+    document.getElementById('customer_email').value = '';
+    document.getElementById('room_type').selectedIndex = 0;
+    document.getElementById('guest_number').selectedIndex = 1;
+    document.getElementById('guest_satisfaction').value = '';
+    
+    // Reset satisfaction selection
+    document.querySelectorAll('.satisfaction-option').forEach(option => {
+      option.classList.remove('selected');
+    });
+    
+    updateBookingPrice();
+  }
+
+  // ============================================
+  // BOOKINGS PANEL FUNCTIONS
+  // ============================================
+  function openBookingsPanel() {
+    document.getElementById('bookingsPanel').classList.remove('hidden');
+    loadAllBookings();
+  }
+
+  function closeBookingsPanel() {
+    document.getElementById('bookingsPanel').classList.add('hidden');
+  }
+
+  function loadAllBookings() {
+    if (!database) {
+      console.log('Database not initialized, using demo data');
+      displayDemoBookings();
+      return;
+    }
+
+    database.ref('bookings').once('value')
+      .then((snapshot) => {
+        allBookings = [];
+        snapshot.forEach((childSnapshot) => {
+          allBookings.push(childSnapshot.val());
+        });
+        
+        allBookings.sort((a, b) => new Date(b.booking_timestamp) - new Date(a.booking_timestamp));
+        
+        console.log('Loaded bookings:', allBookings);
+        displayBookings(allBookings);
+        updateBookingStats(allBookings);
+      })
+      .catch((error) => {
+        console.error('Error loading bookings:', error);
+        displayDemoBookings();
+      });
+  }
+
+  function displayDemoBookings() {
+    allBookings = [
+      {
+        id: '1',
+        customer_name: 'John Doe',
+        customer_email: 'john@example.com',
+        room_type: 'Deluxe Room',
+        check_in_date: '2024-12-01',
+        check_out_date: '2024-12-05',
+        total_price: 600,
+        guest_satisfaction: 'Very Satisfied',
+        status: 'confirmed'
+      },
+      {
+        id: '2',
+        customer_name: 'Jane Smith',
+        customer_email: 'jane@example.com',
+        room_type: 'Presidential Suite',
+        check_in_date: '2024-12-10',
+        check_out_date: '2024-12-15',
+        total_price: 2500,
+        guest_satisfaction: 'Excellent',
+        status: 'pending'
+      }
+    ];
+    displayBookings(allBookings);
+    updateBookingStats(allBookings);
+  }
+
+  function displayBookings(bookings) {
+    const tbody = document.getElementById('bookingsTableBody');
+    const noBookingsMsg = document.getElementById('noBookingsMessage');
+    
+    if (!bookings || bookings.length === 0) {
+      tbody.innerHTML = '';
+      noBookingsMsg.style.display = 'block';
+      return;
+    }
+    
+    noBookingsMsg.style.display = 'none';
+    
+    tbody.innerHTML = bookings.map(booking => `
+      <tr class="border-b border-gray-700 hover:bg-gray-750 transition-colors">
+        <td class="p-4">
+          <div class="font-medium text-white">${escapeHtml(booking.customer_name)}</div>
+          <div class="text-sm text-gray-400">${escapeHtml(booking.customer_email)}</div>
+        </td>
+        <td class="p-4 text-gray-300">${escapeHtml(booking.room_type)}</td>
+        <td class="p-4 text-gray-300">${formatDate(booking.check_in_date)}</td>
+        <td class="p-4 text-gray-300">${formatDate(booking.check_out_date)}</td>
+        <td class="p-4">
+          <span class="gold-text font-semibold">$${parseInt(booking.total_price).toLocaleString()}</span>
+        </td>
+        <td class="p-4">
+          ${booking.guest_satisfaction ? `
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">
+              ${escapeHtml(booking.guest_satisfaction)}
+            </span>
+          ` : '<span class="text-gray-500">Not rated</span>'}
+        </td>
+        <td class="p-4">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(booking.status)}">
+            ${(booking.status || 'confirmed').toUpperCase()}
+          </span>
+        </td>
+        <td class="p-4">
+          <div class="flex gap-2">
+            <button onclick="viewBookingDetails('${booking.id}')" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors" title="View Details">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button onclick="cancelBooking('${booking.id}')" class="px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm transition-colors" title="Cancel">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function updateBookingStats(bookings) {
+    const total = bookings.length;
+    const confirmed = bookings.filter(b => (b.status || 'confirmed').toLowerCase() === 'confirmed').length;
+    const pending = bookings.filter(b => (b.status || '').toLowerCase() === 'pending').length;
+    const cancelled = bookings.filter(b => (b.status || '').toLowerCase() === 'cancelled').length;
+    
+    document.getElementById('totalBookingsCount').textContent = total;
+    document.getElementById('confirmedBookingsCount').textContent = confirmed;
+    document.getElementById('pendingBookingsCount').textContent = pending;
+    document.getElementById('cancelledBookingsCount').textContent = cancelled;
+  }
+
+  function filterBookings() {
+    const searchTerm = document.getElementById('searchBookings').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    
+    let filtered = allBookings;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(booking => 
+        booking.customer_name.toLowerCase().includes(searchTerm) ||
+        booking.customer_email.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => 
+        (booking.status || 'confirmed').toLowerCase() === statusFilter
+      );
+    }
+    
+    displayBookings(filtered);
+  }
+
+  function refreshBookings() {
+    loadAllBookings();
+  }
+
+  function viewBookingDetails(bookingId) {
+    const booking = allBookings.find(b => b.id === bookingId);
+    if (!booking) return;
+    
+    const details = `
+Booking Details
+═══════════════════════════
+
+Guest Information:
+Name: ${booking.customer_name}
+Email: ${booking.customer_email}
+
+Booking Information:
+Room Type: ${booking.room_type}
+Check-in: ${formatDate(booking.check_in_date)}
+Check-out: ${formatDate(booking.check_out_date)}
+Guests: ${booking.guest_number || 2}
+Satisfaction: ${booking.guest_satisfaction || 'Not rated'}
+Status: ${(booking.status || 'confirmed').toUpperCase()}
+
+Pricing:
+Total Amount: $${parseInt(booking.total_price).toLocaleString()}
+
+Booking Date: ${formatDate(booking.booking_timestamp)}
+Booking ID: ${booking.id}
+    `;
+    
+    alert(details);
+  }
+
+  function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?')) {
+      return;
+    }
+    
+    if (database) {
+      database.ref('bookings/' + bookingId).update({ status: 'cancelled' })
+        .then(() => {
+          alert('Booking cancelled successfully');
+          loadAllBookings();
+        })
+        .catch((error) => {
+          console.error('Error cancelling booking:', error);
+          alert('Failed to cancel booking. Please try again.');
+        });
+    } else {
+      const booking = allBookings.find(b => b.id === bookingId);
+      if (booking) {
+        booking.status = 'cancelled';
+        displayBookings(allBookings);
+        updateBookingStats(allBookings);
+        alert('Booking cancelled successfully');
+      }
+    }
+  }
+
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('LuxuryStay Hotel Management System Initialized');
+    
+    // Initialize Firebase with authentication
+    initFirebase();
+    
+    // Initialize Chatbot
+    new LuxuryStayChatbot();
+    
+    // Attach event listeners
+    const openBookingBtn = document.getElementById('openBookingBtn');
+    const openBookingBtn2 = document.getElementById('openBookingBtn2');
+    const viewBookingsBtn = document.getElementById('viewBookingsBtn');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    
+    if (openBookingBtn) {
+      openBookingBtn.addEventListener('click', () => openBookingModal());
+    }
+    
+    if (openBookingBtn2) {
+      openBookingBtn2.addEventListener('click', () => openBookingModal());
+    }
+    
+    if (viewBookingsBtn) {
+      viewBookingsBtn.addEventListener('click', openBookingsPanel);
+    }
+    
+    if (adminLoginBtn) {
+      adminLoginBtn.addEventListener('click', openAdminLoginModal);
+    }
+    
+    console.log('All event listeners attached');
+  });
+</script>
+
+</body>
+</html>

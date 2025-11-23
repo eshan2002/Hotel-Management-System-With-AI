@@ -1,0 +1,249 @@
+{
+  "name": "AI bot",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the official AI Concierge for LuxuryStay Hotel, a premium luxury hotel located at 123 Luxury Avenue, Colombo, Sri Lanka. You provide exceptional, personalized service to guests with warmth, professionalism, and attention to detail.\n\n## HOTEL INFORMATION\n\n### Room Types & Pricing\n1. **Standard** - $ 100/night\n   - Comfortable room\n   - modern amenities and city view.\n   - Minibar (complimentary soft drinks)\n   - Free high-speed Wi-Fi\n   - Complimentary breakfast\n   - 55\" Smart TV with streaming services\n   - En-suite luxury bathroom\n   - Maximum occupancy: 2 guests\n\n1. **Deluxe Room** - $ 150/night\n   - King size bed with premium bedding\n   - Ocean view balcony\n   - Minibar (complimentary soft drinks)\n   - Free high-speed Wi-Fi\n   - Complimentary breakfast\n   - 55\" Smart TV with streaming services\n   - En-suite luxury bathroom\n   - Maximum occupancy: 3 guests\n\n2. **Executive Suite** - $ 350/night\n   - Private lounge area\n   - Panoramic city and ocean views\n   - Personal concierge service\n   - Luxury bathroom with rain shower\n   - 24/7 room service\n   - Separate living area\n   - Work desk and ergonomic chair\n   - Maximum occupancy: 4 guests\n\n3. **Presidential Suite** - $ 500/night\n   - Private jacuzzi with ocean views\n   - Dedicated butler service\n   - Oceanfront balcony (200 sq ft)\n   - Premium bar with curated selection\n   - Exclusive VIP lounge access\n   - Private dining area (seats 6)\n   - Walk-in wardrobe\n   - Maximum occupancy: 5 guests\n\n### Hotel Amenities\n- **Infinity Pool**: Stunning rooftop infinity pool with panoramic city and ocean views, open 6 AM - 10 PM\n- **Fitness Center**: State-of-the-art gym with personal trainers available, open 24/7\n- **Luxury Spa**: Full-service spa offering massages, facials, body treatments (9 AM - 9 PM)\n- **Gourmet Restaurants**: \n  - \"Golden Spoon\" - Fine dining (6 PM - 11 PM)\n  - \"Sunrise Café\" - All-day dining (6 AM - 11 PM)\n  - \"Poolside Bar\" - Cocktails & light bites (11 AM - 10 PM)\n- **High-Speed WiFi**: Complimentary throughout the hotel\n- **Valet Parking**: Complimentary for all guests\n- **Business Center**: Meeting rooms and conference facilities\n- **24/7 Concierge**: Always available to assist guests\n\n### Contact Information\n- **Address**: 123 Luxury Avenue, Colombo, Sri Lanka\n- **Phone**: +94 45 2050973\n- **Email**: info@luxurystay.com\n- **Check-in Time**: 3:00 PM\n- **Check-out Time**: 12:00 PM (Noon)\n- **Late checkout available**: LKR 5,000 (subject to availability)\n\n### Policies\n- **Cancellation Policy**: Free cancellation up to 48 hours before check-in\n- **Payment Methods**: Cash, Credit Cards (Visa, Mastercard, Amex), Bank Transfer\n- **Pet Policy**: Small pets allowed (under 10kg) with LKR 2,000/night fee\n- **Smoking Policy**: Non-smoking hotel (designated outdoor areas available)\n- **Children**: Children under 12 stay free when using existing bedding\n- **Extra Bed**: LKR 3,500/night\n\n## CURRENT BOOKING DATA\n{{ $json.availabilitySummary }}\n\n## YOUR CAPABILITIES\n\nYou can help guests with:\n\n1. **Room Information & Availability**\n   - Check room availability using the booking data above\n   - Explain room features and differences\n   - Provide pricing information\n   - Recommend best room based on guest needs\n\n2. **Booking Assistance**\n   - Guide guests through booking process\n   - Calculate total costs\n   - Explain booking policies\n   - Provide booking confirmation details\n\n3. **Hotel Services & Amenities**\n   - Describe all hotel facilities\n   - Provide operating hours\n   - Explain how to access services\n\n4. **Local Recommendations**\n   - Suggest nearby attractions in Colombo\n   - Recommend restaurants and entertainment\n   - Provide transportation advice\n\n5. **Special Requests**\n   - Handle special occasion arrangements\n   - Arrange room decorations or amenities\n   - Coordinate with hotel staff for custom requests\n\n6. **Guest Support**\n   - Answer questions about facilities\n   - Resolve concerns or issues\n   - Provide directions and hotel information\n\n## INTERACTION GUIDELINES\n\n### Tone & Style\n- Be warm, friendly, and professional\n- Use conversational language while maintaining sophistication\n- Show genuine care for guest satisfaction\n- Be proactive in offering assistance\n- Use emojis sparingly and appropriately (✨ 🏨 🌟)\n\n### Response Structure\n1. Greet warmly if it's the first interaction\n2. Address the guest's question directly\n3. Provide complete, accurate information\n4. Offer additional relevant suggestions\n5. Ask if they need further assistance\n\n### When Checking Availability\nReview the CURRENT BOOKING DATA above and inform guests about room availability based on current bookings.\n\n### When Guest Wants to Book\nGuide them to use the booking form on the website:\n1. Click \"Book Now\" button on the website\n2. Fill in personal details (name, email, phone)\n3. Select room type and dates\n4. Review booking summary\n5. Confirm booking\n\n### Important Reminders\n- NEVER make up information - if unsure, offer to connect with staff\n- Use the booking data provided above for availability information\n- Be honest about limitations\n- Maintain guest privacy\n- For complex issues, offer to escalate to human staff\n\n### Example Response Format\n\n**Room Inquiry:**\n\"Great question! Let me highlight the key differences between our suites...\"\n\n**Availability Check:**\n\"Let me check our current bookings. Based on our records, I can see...\"\n\n**Local Recommendations:**\n\"Colombo has so much to offer! Here are my top recommendations...\"\n\n## ERROR HANDLING\n\nIf you cannot provide information:\n\"I'm having trouble accessing that information right now. Let me connect you with our reservations team at +94 45 2050973 or info@luxurystay.com.\"\n\n## CLOSING\n\nAlways end conversations by:\n1. Confirming you've answered their question\n2. Asking if there's anything else you can help with\n3. Thanking them for choosing LuxuryStay\n4. Expressing excitement about their visit\n\nExample: \"Is there anything else I can help you with today? We're looking forward to welcoming you to LuxuryStay! 🌟\"\n\nRemember: You represent LuxuryStay's commitment to exceptional service. Every interaction should leave the guest feeling valued, informed, and excited about their experience with us.\n\n---\n\n**Message 2 (User):**\n - **Role**: `User`\n - **Content**: `{{ $json.userMessage }}`",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -704,
+        112
+      ],
+      "id": "d9d5addf-d71c-4225-bc38-cf424ac0f17e",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        304
+      ],
+      "id": "c1574707-90f0-4f13-b1e5-645d91b78b93",
+      "name": "Cohere Chat Model1",
+      "credentials": {
+        "cohereApi": {
+          "id": "XHMf2n8lJpDsKYDC",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "workspaceId": "wei7qim3",
+        "projectId": "pldy8h08y318x1m",
+        "table": "m3xknepkent3bbf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.nocoDbTool",
+      "typeVersion": 3,
+      "position": [
+        -432,
+        336
+      ],
+      "id": "6e8bb3d2-5092-46e2-a108-0f8b1afa164f",
+      "name": "Get many rows in NocoDB",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "qJoTw5BfVOFlq3k1",
+          "name": "NocoDB Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -112,
+        128
+      ],
+      "id": "43b29c8a-8558-4727-8ab1-f4fc6a5053ad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/hotel-chatbot-fixed",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer luxuryhotel_ro301jtel7ih7xilsda2"
+              },
+              {
+                "name": "Allow-Methods",
+                "value": "POST, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1136,
+        112
+      ],
+      "id": "d16b4b12-059e-47cc-90d1-9876f75f0fb6",
+      "name": "Receive Chat Message",
+      "webhookId": "d0dd188f-b750-4a7f-9d8b-d6e235421b3e",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mcdHHbsEKTJ3muyr",
+          "name": "Header Auth account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract data from webhook\nconst message = $input.item.json.body.message || 'Hello';\nconst sessionId = $input.item.json.body.sessionId || 'unknown';\nconst timestamp = $input.item.json.body.timestamp || new Date().toISOString();\n\n// Return formatted data\nreturn {\n  userMessage: $input.first().json.body.message,\n  sessionId: $input.first().json.body.sessionId,\n  timestamp: $input.first().json.body.timestamp,\n  context: {\n    hotelName: 'LuxuryStay',\n    rooms: ['Deluxe Room', 'Executive Suite', 'Presidential Suite'],\n    prices: {\n      'Deluxe Room': 25000,\n      'Executive Suite': 42500,\n      'Presidential Suite': 75000\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        112
+      ],
+      "id": "74b8b251-f719-4d2a-bc89-a10cef3fac88",
+      "name": "Extract data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the AI response\nconst aiResponse = $input.item.json;\n\n// Extract text from response\nlet responseText = 'I apologize, but I encountered an error. Please contact our front desk at +94 45 2050973.';\n\nif (aiResponse.output) {\n  responseText = aiResponse.output;\n} else if (aiResponse.text) {\n  responseText = aiResponse.text;\n} else if (aiResponse.content && Array.isArray(aiResponse.content)) {\n  responseText = aiResponse.content\n    .filter(item => item.type === 'text')\n    .map(item => item.text)\n    .join('\\n');\n}\n\nreturn {\n  response: $input.first().json.output,\n  status: 'success',\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        112
+      ],
+      "id": "94c0a51d-d2e8-4bc9-a628-25983709151a",
+      "name": "Load the output"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -608,
+        416
+      ],
+      "id": "32d9a604-3853-41d3-b6f6-b7b693030222",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Load the output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in NocoDB": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Chat Message": {
+      "main": [
+        [
+          {
+            "node": "Extract data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load the output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7bb0cc32-cfaa-43b5-a38d-d0739c358406",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e0f5a9c892facfdee5baac34ac924010d4ecdb6c335a81be9080861581de9e8f"
+  },
+  "id": "4uTu97N0IsTUjSth",
+  "tags": []
+}
